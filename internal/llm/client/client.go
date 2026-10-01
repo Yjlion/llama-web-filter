@@ -90,6 +90,12 @@ type wireRequest struct {
 	Stream         bool      `json:"stream"`
 	ResponseFormat any       `json:"response_format,omitempty"`
 	CachePrompt    bool      `json:"cache_prompt"`
+	// ChatTemplateKwargs turns off "thinking" in models whose chat template
+	// has it on by default (Gemma 4, Qwen3.5). Otherwise llama-server routes
+	// the reasoning to reasoning_content, the token budget runs out before
+	// any answer, and content comes back empty. Templates without the
+	// switch ignore it.
+	ChatTemplateKwargs map[string]any `json:"chat_template_kwargs,omitempty"`
 }
 
 type wireResponse struct {
@@ -115,11 +121,12 @@ var ErrUnavailable = errors.New("llm server unavailable")
 // Chat performs one completion.
 func (c *Client) Chat(ctx context.Context, req Request) (Response, error) {
 	wr := wireRequest{
-		Model:       c.Model,
-		Messages:    req.Messages,
-		MaxTokens:   req.MaxTokens,
-		Temperature: req.Temperature,
-		CachePrompt: true,
+		Model:              c.Model,
+		Messages:           req.Messages,
+		MaxTokens:          req.MaxTokens,
+		Temperature:        req.Temperature,
+		CachePrompt:        true,
+		ChatTemplateKwargs: map[string]any{"enable_thinking": false},
 	}
 	if wr.MaxTokens == 0 {
 		wr.MaxTokens = 256
@@ -173,12 +180,18 @@ func (c *Client) Chat(ctx context.Context, req Request) (Response, error) {
 	if len(wres.Choices) == 0 {
 		return Response{}, errors.New("llm: empty response")
 	}
-	return Response{
+	res := Response{
 		Content:          wres.Choices[0].Message.Content,
 		PromptTokens:     wres.Usage.PromptTokens,
 		CompletionTokens: wres.Usage.CompletionTokens,
 		Elapsed:          time.Since(started),
-	}, nil
+	}
+	if req.Schema != nil && wres.Choices[0].FinishReason == "length" {
+		// A structured reply cut off at the token limit cannot parse; say
+		// so instead of reporting a confusing JSON syntax error.
+		return res, fmt.Errorf("llm: reply cut off at the %d-token limit (%s)", wr.MaxTokens, truncate(res.Content, 120))
+	}
+	return res, nil
 }
 
 // ChatJSON performs a schema-constrained completion and decodes the reply
