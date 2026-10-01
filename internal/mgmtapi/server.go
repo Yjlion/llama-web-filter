@@ -52,6 +52,10 @@ type Server struct {
 	// is disabled, and both endpoints say so.
 	Scanner ContentScanner
 
+	// LLM drives /api/llm/*: runtime status, model downloads, restarts.
+	// Set by `run`; nil under standalone `mgmt`.
+	LLM LLMController
+
 	// ForcePlaintext makes ServeMgmt ignore mgmt_tls and serve plain HTTP.
 	// Set by the Android path (mobile/): the WebView that renders this UI has
 	// no trust path to a CA-minted management leaf, and neither does the PAC
@@ -185,6 +189,7 @@ func (s *Server) Router() *chi.Mux {
 	r.Post("/api/wireguard", s.handleWireguardStub)
 
 	s.registerOpsRoutes(r)
+	s.registerLLMRoutes(r)
 	s.registerCertsRoutes(r)
 	s.registerCategoriesRoutes(r)
 	s.registerBackupRoutes(r)

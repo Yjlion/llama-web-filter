@@ -45,6 +45,10 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
           <span data-i18n="nav.tools">Tools</span>
         </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
         <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <span data-i18n="nav.settings">Settings</span>
@@ -114,6 +118,76 @@
           </div>
           <p class="text-xs text-gray-400" data-i18n="set.listenFormat">Format: host:port. Examples: 0.0.0.0:8080 (all IPv4), [::]:8080 (all IPv6), [::1]:8080 (IPv6 localhost), 192.168.1.10:3128.</p>
           <p class="text-xs text-gray-400">The TLS variants ("over TLS") present a certificate signed by this proxy's CA, so clients must trust the CA to connect to the proxy endpoint itself. Restart after saving changes.</p>
+        </div>
+
+        <!-- Local LLM -->
+        <div id="llm" class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Local LLM</h2>
+            <p class="text-xs text-gray-500 mt-0.5">The edge model that classifies pages and images and compiles natural-language rules. Changing the model or acceleration takes effect after a restart; download progress is on the <a href="llm.html" class="text-blue-600 hover:underline">LLM page</a>.</p>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.llm.enabled" />
+            Enable the local LLM (when off, pages and images are not classified)
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Model</label>
+              <select x-model="settings.llm.model" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <template x-for="m in llmCatalog" :key="m.id">
+                  <option :value="m.id" x-text="m.name + (m.vision ? '' : ' (text only)') + ' · ~' + m.approx_size_mb + ' MB'"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Acceleration</label>
+              <select x-model="settings.llm.accel" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="auto">Auto-detect (NVIDIA → CUDA, else Vulkan, else CPU)</option>
+                <option value="cpu">CPU only</option>
+                <option value="cuda">CUDA (NVIDIA)</option>
+                <option value="vulkan">Vulkan (AMD / Intel / NVIDIA)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Parallel slots</label>
+              <input type="number" min="1" max="16" x-model.number="settings.llm.parallel_slots" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">CPU threads (0 = auto)</label>
+              <input type="number" min="0" max="256" x-model.number="settings.llm.threads" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Max image size sent to the model (px)</label>
+              <input type="number" min="64" max="2048" x-model.number="settings.llm.max_image_px" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">External OpenAI-compatible server (optional)</label>
+              <input type="text" x-model="settings.llm.external_url" placeholder="http://127.0.0.1:8081" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p class="text-xs text-gray-400 mt-1">When set, nothing is downloaded or started; requests go to this URL instead.</p>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs font-medium text-gray-600 mb-2">Wait budgets (ms) — how long a request waits for a verdict before the policy's fallback applies</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Image</label>
+                <input type="number" min="50" x-model.number="settings.llm.budget.image_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Page text</label>
+                <input type="number" min="50" x-model.number="settings.llm.budget.text_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Host</label>
+                <input type="number" min="50" x-model.number="settings.llm.budget.host_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Rule compile</label>
+                <input type="number" min="1000" x-model.number="settings.llm.budget.compile_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400">Data directory: <span class="font-mono" x-text="settings.llm.data_dir || '(default)'"></span></p>
         </div>
 
         <!-- WireGuard panel -->
@@ -458,7 +532,8 @@
   <script>
     function settingsPage() {
       return {
-        settings: { proxy_listen: ['0.0.0.0:8080', 'socks5@127.0.0.1:1080'], mgmt_host: '0.0.0.0', mgmt_port: 8000, cert_dir: './certs', policies_dir: './policies', logs_dir: './logs', categories_dir: './categories', log_blocks: true, log_requests: true, log_retention_days: 30, default_policy: null, auth_enabled: false, has_password: false, pac_proxy_host: '', pac_direct_hosts: [], pac_direct_ips: [], mgmt_hostname: 'web.filter', upstream_proxy: '', upstream_auth: '', ui_language: 'en', proxy_auth_enabled: false, proxy_auth_username: '', has_proxy_auth: false },
+        llmCatalog: [],
+        settings: { llm: { enabled: true, model: 'gemma-4-e2b', accel: 'auto', threads: 0, parallel_slots: 4, max_image_px: 384, external_url: '', data_dir: '', budget: { image_ms: 1500, text_ms: 2000, host_ms: 500, compile_ms: 60000 } }, proxy_listen: ['0.0.0.0:8080', 'socks5@127.0.0.1:1080'], mgmt_host: '0.0.0.0', mgmt_port: 8000, cert_dir: './certs', policies_dir: './policies', logs_dir: './logs', categories_dir: './categories', log_blocks: true, log_requests: true, log_retention_days: 30, default_policy: null, auth_enabled: false, has_password: false, pac_proxy_host: '', pac_direct_hosts: [], pac_direct_ips: [], mgmt_hostname: 'web.filter', upstream_proxy: '', upstream_auth: '', ui_language: 'en', proxy_auth_enabled: false, proxy_auth_username: '', has_proxy_auth: false },
         status: { proxy_port: null },
         newPassword: '',
         newProxyAuthPassword: '',
@@ -546,11 +621,17 @@
               if (!Array.isArray(s.pac_direct_hosts)) s.pac_direct_hosts = [];
               if (!Array.isArray(s.pac_direct_ips)) s.pac_direct_ips = [];
               if (!s.mgmt_hostname) s.mgmt_hostname = 'web.filter';
+              if (!s.llm) s.llm = this.settings.llm;
+              if (!s.llm.budget) s.llm.budget = this.settings.llm.budget;
               this.settings = s;
             }
           } catch (e) {}
           await this.loadStatus();
           await this.refreshWireguard();
+          try {
+            const c = await fetch('/api/llm/catalog');
+            if (c.ok) this.llmCatalog = await c.json();
+          } catch (e) {}
         },
 
         async loadStatus() {

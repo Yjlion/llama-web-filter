@@ -30,6 +30,7 @@ func main() {
 		newRunCmd(),
 		newProxyCmd(),
 		newMgmtCmd(),
+		newLLMCmd(),
 		newCategoriesCmd(),
 		newOuiCmd(),
 		newServiceCmd(),

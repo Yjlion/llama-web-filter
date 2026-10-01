@@ -31,6 +31,7 @@ func TestEverySettingsFieldIsClassified(t *testing.T) {
 		"upstream_proxy":     true,
 		"upstream_auth":      true,
 		"disable_tray":       true,
+		"llm":                true,
 	}
 
 	for _, name := range SettingsFieldNames() {

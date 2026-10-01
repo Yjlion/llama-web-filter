@@ -55,7 +55,15 @@ func runProxyAndMgmtWith(ctx context.Context, settingsPath string, mgmtSrv *mgmt
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	eng, rt, err := app.BuildProxyEngine(settingsPath, app.Classifiers{})
+	// The LLM service comes up first (or reports why it cannot) so the
+	// pipeline's classifiers have a backend from the first request.
+	llmSvc := app.NewLLMService(ctx, mgmtSrv.Settings().LLM)
+	defer llmSvc.Stop()
+	adapter := &app.LLMAdapter{Svc: llmSvc}
+	mgmtSrv.Scanner = adapter
+	mgmtSrv.LLM = adapter
+
+	eng, rt, err := app.BuildProxyEngine(settingsPath, adapter.PipelineClassifiers())
 	if err != nil {
 		mgmtSrv.Logs.Close()
 		return fmt.Errorf("start proxy engine: %w", err)

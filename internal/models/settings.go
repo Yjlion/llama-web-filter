@@ -77,6 +77,9 @@ type GlobalSettings struct {
 
 	Icap IcapConfig `json:"icap"`
 
+	// LLM configures the local edge model runtime; see LLMConfig.
+	LLM LLMConfig `json:"llm"`
+
 	// OuiPath is a Go-port-only optional field (documented deviation): path
 	// to an optional IEEE OUI vendor lookup table override. When empty, the
 	// app uses the embedded lookup table; `webfilter oui update` can still
@@ -184,6 +187,7 @@ func NewGlobalSettings() GlobalSettings {
 		PacDirectIPs:     []string{},
 		MgmtHostname:     "web.filter",
 		Icap:             NewIcapConfig(),
+		LLM:              NewLLMConfig(),
 	}
 }
 

@@ -60,6 +60,22 @@ var (
 		[]string{"classifier", "result"},
 	)
 
+	// LLMRequests counts calls to the edge model by kind (image/text/host/
+	// compile) and outcome (ok/error/timeout/unavailable).
+	LLMRequests = Default.NewCounterVec(
+		"webfilter_llm_requests_total",
+		"Edge-LLM classification calls, by kind and outcome.",
+		[]string{"kind", "result"},
+	)
+
+	// LLMDuration measures wall time of one model call, by kind.
+	LLMDuration = Default.NewHistogramVec(
+		"webfilter_llm_request_duration_seconds",
+		"Wall time of one edge-LLM call, by kind.",
+		[]string{"kind"},
+		nil,
+	)
+
 	// UpstreamErrors counts failed upstream fetches (DNS failure, refused
 	// connection, TLS failure, timeout). A rising rate here is the proxy
 	// failing to reach the internet, not the proxy filtering anything.
