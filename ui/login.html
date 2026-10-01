@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.login">Sign in — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen flex items-center justify-center" x-data="login()" x-init="init()">
+  <div class="fixed top-4 end-4">
+    <select class="wf-lang-select bg-card text-gray-600 text-xs rounded px-2 py-1 border border-gray-200 focus:outline-none"></select>
+  </div>
+  <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
+    <div class="flex items-center gap-2 mb-6">
+      <svg class="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <span class="font-bold text-gray-900">WebFilter Proxy</span>
+    </div>
+    <h1 class="text-lg font-semibold text-gray-900 mb-1" data-i18n="login.title">Sign in</h1>
+    <p class="text-sm text-gray-500 mb-5" data-i18n="login.subtitle">Enter the management password.</p>
+
+    <form @submit.prevent="submit()">
+      <input type="password" x-model="password" data-i18n-ph="login.pwPh" placeholder="Password" autofocus
+             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <div x-show="error" x-cloak class="mt-2 text-sm text-red-600" x-text="error"></div>
+      <button type="submit" :disabled="busy"
+              class="mt-4 w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+        <span x-text="busy ? $t('login.signingIn') : $t('login.signIn')"></span>
+      </button>
+    </form>
+
+    <a href="/api/ca-cert" class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-gray-700">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      <span data-i18n="nav.downloadCert">Download CA Cert</span>
+    </a>
+  </div>
+
+  <script>
+    function login() {
+      return {
+        password: '', error: '', busy: false,
+        async init() {
+          // If auth is off or already signed in, skip the prompt.
+          try {
+            const s = await fetch('/api/auth-status').then(r => r.json());
+            if (!s.enabled || s.authenticated) location.href = 'index.html';
+          } catch (e) {}
+        },
+        async submit() {
+          this.busy = true; this.error = '';
+          try {
+            const res = await fetch('/api/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: this.password }),
+            });
+            if (res.ok) { location.href = 'index.html'; return; }
+            const d = await res.json().catch(() => ({}));
+            this.error = d.detail || window.wfT('login.failed');
+          } catch (e) {
+            this.error = window.wfT('login.netErr');
+          }
+          this.busy = false;
+        },
+      };
+    }
+  </script>
+</body>
+</html>

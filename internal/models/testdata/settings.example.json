@@ -1,0 +1,21 @@
+{
+  "proxy_listen": [
+    "0.0.0.0:8080"
+  ],
+  "mgmt_host": "0.0.0.0",
+  "mgmt_port": 8000,
+  "cert_dir": "./certs",
+  "policies_dir": "./policies",
+  "ui_language": "en",
+  "logs_dir": "./logs",
+  "log_blocks": true,
+  "log_requests": true,
+  "log_retention_days": 30,
+  "default_policy": null,
+  "auth_enabled": false,
+  "password_hash": "",
+  "secret_key": "",
+  "pac_direct_ips": [],
+  "mgmt_hostname": "web.filter",
+  "mgmt_hostname_ip": ""
+}

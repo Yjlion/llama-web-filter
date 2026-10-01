@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.analytics">Analytics — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="analyticsPage()" x-init="init()">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+      <div class="px-3 py-4 border-t border-sidebar-border">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900" data-i18n="an.title">Analytics</h1>
+            <p class="text-sm text-gray-500 mt-1" data-i18n="an.subtitle">Aggregated from request &amp; block logs</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select x-model.number="hours" @change="load()"
+                    class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="1" x-text="$t('an.last1h')">Last 1 hour</option>
+              <option value="6" x-text="$t('an.last6h')">Last 6 hours</option>
+              <option value="24" selected x-text="$t('an.last24h')">Last 24 hours</option>
+              <option value="72" x-text="$t('an.last3d')">Last 3 days</option>
+              <option value="168" x-text="$t('an.last7d')">Last 7 days</option>
+              <option value="720" x-text="$t('an.last30d')">Last 30 days</option>
+            </select>
+            <button @click="load()" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" data-i18n="an.refresh">Refresh</button>
+          </div>
+        </div>
+
+        <!-- Summary stat cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="an.totalRequests">Total Requests</div>
+            <div class="text-2xl font-bold text-gray-900" x-text="data.total_requests ?? '—'"></div>
+          </div>
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="an.totalBlocks">Total Blocks</div>
+            <div class="text-2xl font-bold text-red-600" x-text="data.total_blocks ?? '—'"></div>
+          </div>
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="an.blockRate">Block Rate</div>
+            <div class="text-2xl font-bold text-gray-900" x-text="blockRate"></div>
+          </div>
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="an.devicesSeen">Devices Seen</div>
+            <div class="text-2xl font-bold text-gray-900" x-text="(data.per_device ?? []).length"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+          <!-- Top blocked domains -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="an.topBlockedDomains">Top Blocked Domains</h2>
+            </div>
+            <div x-show="!data.top_blocked_domains || data.top_blocked_domains.length === 0"
+                 class="px-6 py-8 text-center text-gray-400 text-sm" data-i18n="an.noBlocks">No blocks in this window.</div>
+            <ul x-show="data.top_blocked_domains && data.top_blocked_domains.length > 0" class="divide-y divide-gray-50">
+              <template x-for="(d, i) in data.top_blocked_domains" :key="i">
+                <li class="px-6 py-3 flex items-center gap-3">
+                  <span class="text-xs font-mono text-gray-400 w-5 text-right" x-text="i + 1"></span>
+                  <span class="flex-1 font-mono text-sm text-gray-800 truncate" x-text="d.domain" :title="d.domain"></span>
+                  <div class="w-24 bar-track">
+                    <div class="bar-fill bg-red-400" :style="'width:' + pct(d.count, data.top_blocked_domains[0].count) + '%'"></div>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-700 w-10 text-right" x-text="d.count"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+
+          <!-- Blocks by component -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="an.blocksByFilter">Blocks by Filter</h2>
+            </div>
+            <div x-show="!data.blocks_by_component || data.blocks_by_component.length === 0"
+                 class="px-6 py-8 text-center text-gray-400 text-sm" data-i18n="an.noBlocks">No blocks in this window.</div>
+            <ul x-show="data.blocks_by_component && data.blocks_by_component.length > 0" class="divide-y divide-gray-50">
+              <template x-for="(c, i) in data.blocks_by_component" :key="i">
+                <li class="px-6 py-3 flex items-center gap-3">
+                  <span class="flex-1 text-sm text-gray-800" x-text="c.component"></span>
+                  <div class="w-32 bar-track">
+                    <div class="bar-fill bg-blue-400" :style="'width:' + pct(c.count, data.blocks_by_component[0].count) + '%'"></div>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-700 w-10 text-right" x-text="c.count"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Blocks over time -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold text-gray-900" data-i18n="an.blocksOverTime">Blocks Over Time (hourly)</h2>
+          </div>
+          <div x-show="!data.blocks_timeline || data.blocks_timeline.length === 0"
+               class="px-6 py-8 text-center text-gray-400 text-sm" data-i18n="an.noBlocks">No block events in this window.</div>
+          <div x-show="data.blocks_timeline && data.blocks_timeline.length > 0" class="px-6 py-5">
+            <div class="flex items-end gap-1 h-28 overflow-x-auto">
+              <template x-for="(b, i) in data.blocks_timeline" :key="i">
+                <div class="flex flex-col items-center gap-1 flex-shrink-0" style="min-width:28px">
+                  <span class="text-xs text-gray-500" x-text="b.count"></span>
+                  <div class="w-5 bg-red-400 rounded-t transition-all duration-300"
+                       :style="'height:' + Math.max(4, pct(b.count, timelineMax) * 0.88) + 'px'"
+                       :title="fmtHour(b.ts) + ': ' + b.count + ' blocks'"></div>
+                  <span class="text-xs text-gray-400 rotate-45 origin-left whitespace-nowrap" x-text="fmtHour(b.ts)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-device breakdown -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold text-gray-900" data-i18n="an.perDevice">Per-Device Breakdown</h2>
+          </div>
+          <div x-show="!data.per_device || data.per_device.length === 0"
+               class="px-6 py-8 text-center text-gray-400 text-sm" data-i18n="an.noRequests">No requests in this window.</div>
+          <div x-show="data.per_device && data.per_device.length > 0" class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100 text-left">
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.clientIp">Client IP</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.policy">Policy</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.total">Total</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.blocked">Blocked</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="an.blockRate">Block Rate</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="(d, i) in data.per_device" :key="i">
+                  <tr class="border-b border-gray-50">
+                    <td class="px-6 py-2 font-mono text-xs text-gray-800" x-text="d.ip"></td>
+                    <td class="px-6 py-2 text-gray-600 text-xs" x-text="d.policy || '—'"></td>
+                    <td class="px-6 py-2 text-gray-700 font-medium" x-text="d.total"></td>
+                    <td class="px-6 py-2">
+                      <span x-show="d.blocked > 0" class="badge bg-red-100 text-red-700" x-text="d.blocked"></span>
+                      <span x-show="d.blocked === 0" class="text-gray-400">0</span>
+                    </td>
+                    <td class="px-6 py-2 text-xs text-gray-500"
+                        x-text="d.total > 0 ? Math.round(d.blocked / d.total * 100) + '%' : '0%'"></td>
+                    <td class="px-6 py-2">
+                      <div class="w-20 bar-track">
+                        <div class="bar-fill bg-red-300"
+                             :style="'width:' + (d.total > 0 ? Math.round(d.blocked / d.total * 100) : 0) + '%'"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function analyticsPage() {
+      return {
+        hours: 24,
+        data: {},
+
+        async init() { await this.load(); },
+
+        async load() {
+          try {
+            const res = await fetch(`/api/analytics?hours=${this.hours}`);
+            this.data = await res.json();
+          } catch (e) { this.data = {}; }
+        },
+
+        get blockRate() {
+          const t = this.data.total_requests ?? 0;
+          const b = this.data.total_blocks ?? 0;
+          if (!t) return '—';
+          return Math.round(b / t * 100) + '%';
+        },
+
+        get timelineMax() {
+          const tl = this.data.blocks_timeline ?? [];
+          return tl.reduce((m, b) => Math.max(m, b.count), 1);
+        },
+
+        pct(val, max) { return max > 0 ? Math.round(val / max * 100) : 0; },
+
+        fmtHour(ts) {
+          const d = new Date(ts * 1000);
+          return d.toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        },
+      };
+    }
+  </script>
+</body>
+</html>

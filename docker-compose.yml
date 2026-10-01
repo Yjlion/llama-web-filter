@@ -1,0 +1,69 @@
+# webfilter - example compose file. See docs/docker.md for the first-run
+# walkthrough (CA install, setting a management password, blocklists).
+#
+#   docker compose up -d
+#   docker compose logs -f webfilter
+#
+# On first start the container writes /data/config/settings.json with
+# 0.0.0.0 binds and absolute paths under /data, then creates
+# /data/{policies,certs,logs}. Everything below assumes those defaults.
+
+services:
+  webfilter:
+    build:
+      context: .
+      args:
+        # Populate these to stamp a real version into `webfilter version`:
+        #   VERSION: v1.2.3
+        #   COMMIT: abc1234
+        VERSION: dev
+    image: webfilter:dev
+    container_name: webfilter
+    restart: unless-stopped
+
+    # NOTE: bridge networking (the default below) makes every client appear
+    # to the engine with the *same* source address, because Docker's
+    # userland proxy SNATs to the bridge gateway - which silently collapses
+    # the MAC/IP/CIDR per-client policy tiers into one. Fine for a single
+    # machine or a one-policy-for-everyone setup. To filter multiple clients
+    # with different policies, use host networking instead (drop `ports:`):
+    #
+    #   network_mode: host
+    #
+    # See "Per-client policies need host networking" in docs/docker.md.
+
+    ports:
+      # HTTP(S) forward proxy - point client devices/browsers here.
+      - "8080:8080"
+      # SOCKS5 (CONNECT only) - NOT published by default, because the
+      # bootstrap settings bind it to `socks5@127.0.0.1:1080`, i.e. loopback
+      # *inside* the container, so a published port would just refuse
+      # connections. To use it, change that entry to `socks5@0.0.0.0:1080`
+      # in Settings -> Listen addresses, restart, and uncomment this:
+      # - "1080:1080"
+      # Management UI + REST API. Bound to loopback on purpose: management
+      # auth is OFF by default, so publishing this on 0.0.0.0 before you set
+      # a password in Settings hands out an unauthenticated admin UI. Widen
+      # it (or put it behind a reverse proxy) once auth_enabled is on.
+      - "127.0.0.1:8000:8000"
+
+    volumes:
+      # config/, policies/, certs/, categories/ and logs/ all live here.
+      # Back this up and you have backed up the whole instance. Do not point
+      # two containers at one volume: logs/webfilter.db is single-writer.
+      - webfilter-data:/data
+
+    # The process handles SIGTERM (cmd/webfilter/main.go uses
+    # signal.NotifyContext), and shutdown waits on teardown, so give it more
+    # room than Docker's 10s default - the systemd unit allows 15s.
+    stop_grace_period: 20s
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8000/api/version"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  webfilter-data:

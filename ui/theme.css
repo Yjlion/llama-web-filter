@@ -1,0 +1,241 @@
+/*
+ * WebFilter management UI — theme tokens + responsive shell.
+ *
+ * Build-free companion to chrome.js. chrome.js remaps Tailwind's `gray`/`blue`
+ * palettes (and adds `canvas`/`card`/`sidebar*` utilities) to the CSS variables
+ * defined here, so existing utility classes (bg-card, text-gray-900, bg-blue-600…)
+ * theme automatically. chrome.js always sets an explicit data-theme="light|dark"
+ * (resolving the user's "auto" preference) and data-accent on <html> BEFORE paint,
+ * so there is no flash and no prefers-color-scheme media query is needed here.
+ *
+ * Colour values are "R G B" triples (no commas) so Tailwind's
+ * rgb(var(--x) / <alpha-value>) opacity modifier keeps working.
+ *
+ *   Neutrals  : --wf-gray-50..900, --wf-canvas (page), --wf-card (surface)
+ *   Accent    : --wf-accent-50/100/400/600/700/800  (the only blue steps used)
+ *   Sidebar   : --wf-sidebar*  (stays dark in both modes)
+ */
+
+/* ── Sidebar chrome — mode-independent (dark in both light & dark themes) ── */
+:root {
+  --wf-sidebar:        17 24 39;   /* slate-900 — matches the original look   */
+  --wf-sidebar-ink:    245 247 250;/* active item / heading text              */
+  --wf-sidebar-muted:  148 163 184;/* inactive nav text (was gray-400)        */
+  --wf-sidebar-active:  31 41 55;  /* hover / active item bg (was gray-800)   */
+  --wf-sidebar-border:  51 65 85;  /* dividers (was gray-700)                 */
+}
+
+/* ── Neutrals: LIGHT ── */
+:root[data-theme="light"] {
+  --wf-canvas:   243 244 246;
+  --wf-card:     255 255 255;
+  --wf-gray-50:  249 250 251;
+  --wf-gray-100: 243 244 246;
+  --wf-gray-200: 229 231 235;
+  --wf-gray-300: 209 213 219;
+  --wf-gray-400: 156 163 175;
+  --wf-gray-500: 107 114 128;
+  --wf-gray-600:  75  85  99;
+  --wf-gray-700:  55  65  81;
+  --wf-gray-800:  31  41  55;
+  --wf-gray-900:  17  24  39;
+}
+
+/* ── Neutrals: DARK (the gray ramp inverts so text-gray-900 reads light) ── */
+:root[data-theme="dark"] {
+  --wf-canvas:   17  21  28;
+  --wf-card:     26  32  42;
+  --wf-gray-50:  30  35  45;
+  --wf-gray-100: 38  44  56;
+  --wf-gray-200: 50  58  72;
+  --wf-gray-300: 71  85 105;
+  --wf-gray-400: 148 163 184;
+  --wf-gray-500: 160 174 192;
+  --wf-gray-600: 190 200 214;
+  --wf-gray-700: 209 217 228;
+  --wf-gray-800: 226 232 240;
+  --wf-gray-900: 241 245 249;
+}
+
+/* ── Accents (light) — fallback default is blue ── */
+:root[data-theme="light"],
+:root[data-theme="light"][data-accent="blue"] {
+  --wf-accent-50:  239 246 255;
+  --wf-accent-100: 219 234 254;
+  --wf-accent-400:  96 165 250;
+  --wf-accent-600:  37  99 235;
+  --wf-accent-700:  29  78 216;
+  --wf-accent-800:  30  64 175;
+}
+:root[data-theme="light"][data-accent="emerald"] {
+  --wf-accent-50:  236 253 245;
+  --wf-accent-100: 209 250 229;
+  --wf-accent-400:  52 211 153;
+  --wf-accent-600:   5 150 105;
+  --wf-accent-700:   4 120  87;
+  --wf-accent-800:   6  95  70;
+}
+:root[data-theme="light"][data-accent="violet"] {
+  --wf-accent-50:  245 243 255;
+  --wf-accent-100: 237 233 254;
+  --wf-accent-400: 167 139 250;
+  --wf-accent-600: 124  58 237;
+  --wf-accent-700: 109  40 217;
+  --wf-accent-800:  91  33 182;
+}
+:root[data-theme="light"][data-accent="rose"] {
+  --wf-accent-50:  255 241 242;
+  --wf-accent-100: 255 228 230;
+  --wf-accent-400: 251 113 133;
+  --wf-accent-600: 225  29  72;
+  --wf-accent-700: 190  18  60;
+  --wf-accent-800: 159  18  57;
+}
+
+/* ── Accents (dark) — ramp shifts lighter so it reads on dark surfaces.
+      step 700 is deliberately light: it is the text colour of the *-100/700
+      tint badges (e.g. the URL filter badge), which now sit on a dark tint. ── */
+:root[data-theme="dark"],
+:root[data-theme="dark"][data-accent="blue"] {
+  --wf-accent-50:  23  37  60;
+  --wf-accent-100: 30  58  95;
+  --wf-accent-400: 96 165 250;
+  --wf-accent-600: 59 130 246;
+  --wf-accent-700: 96 165 250;
+  --wf-accent-800: 147 197 253;
+}
+:root[data-theme="dark"][data-accent="emerald"] {
+  --wf-accent-50:  16  45  38;
+  --wf-accent-100:  6  60  50;
+  --wf-accent-400: 52 211 153;
+  --wf-accent-600: 16 185 129;
+  --wf-accent-700: 52 211 153;
+  --wf-accent-800: 110 231 183;
+}
+:root[data-theme="dark"][data-accent="violet"] {
+  --wf-accent-50:  40  30  70;
+  --wf-accent-100: 49  36  92;
+  --wf-accent-400: 167 139 250;
+  --wf-accent-600: 139  92 246;
+  --wf-accent-700: 167 139 250;
+  --wf-accent-800: 196 181 253;
+}
+:root[data-theme="dark"][data-accent="rose"] {
+  --wf-accent-50:  60  24  32;
+  --wf-accent-100: 80  28  42;
+  --wf-accent-400: 251 113 133;
+  --wf-accent-600: 244  63  94;
+  --wf-accent-700: 251 113 133;
+  --wf-accent-800: 253 164 175;
+}
+
+/* Smooth the switch a touch (not on transforms — keep the drawer snappy). */
+body { transition: background-color .15s ease, color .15s ease; }
+
+/* Form controls default to the themed surface so they don't render as native
+   white boxes (with black text) in dark mode. These are element-level rules, so
+   any explicit utility class (e.g. the sidebar's bg-sidebar-active language
+   select, or a text-gray-700 field) still wins on specificity. In light mode
+   the card is white, so this matches the previous native appearance exactly. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  background-color: rgb(var(--wf-card));
+  color: rgb(var(--wf-gray-900));
+  border-color: rgb(var(--wf-gray-200));
+}
+input::placeholder,
+textarea::placeholder { color: rgb(var(--wf-gray-400)); }
+input, select, textarea { accent-color: rgb(var(--wf-accent-600)); }
+
+/* ── Theme picker (injected into the sidebar by chrome.js) ── */
+.wf-theme-picker .wf-mode-btn {
+  flex: 1 1 0;
+  border: 1px solid rgb(var(--wf-sidebar-border));
+  color: rgb(var(--wf-sidebar-muted));
+  border-radius: .375rem;
+  padding: .25rem 0;
+  font-size: .6875rem;
+  line-height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .12s, color .12s, border-color .12s;
+}
+.wf-theme-picker .wf-mode-btn:hover { color: rgb(var(--wf-sidebar-ink)); }
+.wf-theme-picker .wf-mode-btn.wf-active {
+  background: rgb(var(--wf-accent-600));
+  border-color: rgb(var(--wf-accent-600));
+  color: #fff;
+}
+.wf-theme-picker .wf-swatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgb(var(--wf-sidebar-border));
+  transition: transform .12s;
+}
+.wf-theme-picker .wf-swatch:hover { transform: scale(1.1); }
+.wf-theme-picker .wf-swatch.wf-active {
+  border-color: rgb(var(--wf-sidebar));
+  box-shadow: 0 0 0 2px rgb(var(--wf-sidebar-ink));
+}
+
+/* ── Responsive shell: off-canvas drawer below lg (1024px) ── */
+.wf-topbar { display: none; }
+
+@media (max-width: 1023px) {
+  .wf-sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    transform: translateX(-100%);
+    transition: transform .2s ease;
+    z-index: 50;
+    box-shadow: 0 0 40px rgba(0, 0, 0, .35);
+  }
+  [dir="rtl"] .wf-sidebar { transform: translateX(100%); }
+  .wf-sidebar.wf-open { transform: none; }
+
+  .wf-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 40;
+  }
+  .wf-backdrop.wf-open { opacity: 1; pointer-events: auto; }
+
+  .wf-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    padding: .5rem .75rem;
+    background: rgb(var(--wf-card));
+    border-bottom: 1px solid rgb(var(--wf-gray-200));
+  }
+  .wf-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .5rem;
+    color: rgb(var(--wf-gray-700));
+    cursor: pointer;
+  }
+  .wf-burger:hover { background: rgb(var(--wf-gray-100)); }
+}
+
+/* Desktop: never show mobile chrome even if classes linger. */
+@media (min-width: 1024px) {
+  .wf-backdrop, .wf-topbar { display: none !important; }
+}
