@@ -98,6 +98,9 @@ func TestMutatingRoutesAreLockGated(t *testing.T) {
 		"POST /api/tools/youtube":         true,
 		"POST /api/tools/doh":             true,
 		"POST /api/tools/policy-simulate": true,
+		// Compiling a sentence into a rule is a read: nothing is saved until
+		// POST /api/rules, which is gated.
+		"POST /api/rules/compile": true,
 	}
 
 	s, ts := newTestServer(t)

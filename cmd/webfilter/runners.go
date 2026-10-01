@@ -69,6 +69,7 @@ func runProxyAndMgmtWith(ctx context.Context, settingsPath string, mgmtSrv *mgmt
 	mgmtSrv.Scanner = stack.Scanner()
 	mgmtSrv.LLM = stack.Controller()
 	mgmtSrv.Decisions = stack.Decisions()
+	mgmtSrv.LLMClient = stack.Svc.Client
 
 	eng, rt, err := app.BuildProxyEngine(settingsPath, stack.PipelineClassifiers())
 	if err != nil {

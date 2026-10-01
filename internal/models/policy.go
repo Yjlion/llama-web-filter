@@ -499,6 +499,7 @@ type Policy struct {
 	YouTube         YouTubeConfig         `json:"youtube"`
 	Mitm            MitmConfig            `json:"mitm"`
 	UrlFilter       UrlFilterConfig       `json:"url_filter"`
+	AdBlock         AdBlockConfig         `json:"adblock"`
 	BlockPage       BlockPageConfig       `json:"block_page"`
 }
 
@@ -516,6 +517,7 @@ func NewPolicy() Policy {
 		YouTube:         NewYouTubeConfig(),
 		Mitm:            NewMitmConfig(),
 		UrlFilter:       NewUrlFilterConfig(),
+		AdBlock:         NewAdBlockConfig(),
 		BlockPage:       NewBlockPageConfig(),
 	}
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/logstore"
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/neighbors"
+	"github.com/yjlion/llama-web-filter/internal/policy/rules"
 	"github.com/yjlion/llama-web-filter/internal/settingsvc"
 )
 
@@ -52,6 +53,8 @@ type Runtime struct {
 
 	policyStore *config.PolicyStore
 	policies    atomic.Pointer[[]models.Policy]
+	ruleStore   *rules.Store
+	rules       atomic.Pointer[rules.File]
 	mitmBypass  atomic.Pointer[[]string] // aggregated exclude-mode mitm domains, lowercased
 	generation  atomic.Uint64            // bumped on every policy reload
 }
@@ -84,9 +87,11 @@ func New(settingsPath string) (*Runtime, error) {
 		Logs:         logs,
 		Categories:   categories.NewStore(s.CategoriesDir),
 		policyStore:  config.NewPolicyStore(s.PoliciesDir),
+		ruleStore:    rules.NewStore(rules.PathFor(settingsPath)),
 	}
 	rt.settings.Store(&s)
 	rt.ReloadPolicies()
+	rt.ReloadRules()
 	return rt, nil
 }
 
@@ -178,9 +183,50 @@ func (rt *Runtime) Start(ctx context.Context) {
 	config.WatchDir(ctx, rt.policyStore.Dir, 300*time.Millisecond, rt.ReloadPolicies)
 
 	if dir := filepath.Dir(rt.SettingsPath); dir != "" {
-		config.WatchDir(ctx, dir, 300*time.Millisecond, rt.ReloadSettings)
+		// rules.json lives next to settings.json, so one watch covers both.
+		config.WatchDir(ctx, dir, 300*time.Millisecond, func() {
+			rt.ReloadSettings()
+			rt.ReloadRules()
+		})
 	}
 }
+
+// ReloadRules re-reads rules.json (also invoked by the config-dir watcher).
+func (rt *Runtime) ReloadRules() {
+	f, err := rt.ruleStore.Load()
+	if err != nil {
+		slog.Warn("rules: failed to load rules.json", "err", err)
+		return
+	}
+	rt.rules.Store(&f)
+	rt.generation.Add(1)
+	slog.Info("rules: loaded", "count", len(f.Rules), "devices", len(f.Devices), "path", rt.ruleStore.Path)
+}
+
+// Rules returns the current rules document (never nil).
+func (rt *Runtime) Rules() *rules.File {
+	if f := rt.rules.Load(); f != nil {
+		return f
+	}
+	return &rules.File{Devices: map[string][]string{}}
+}
+
+// DefaultPolicy returns the policy a client with no match is treated as
+// having: the one named "default" if present, else documented defaults.
+// Used when rules apply to an unmatched client.
+func (rt *Runtime) DefaultPolicy() models.Policy {
+	for _, p := range rt.Policies() {
+		if strings.EqualFold(p.Name, "default") {
+			return p
+		}
+	}
+	p := models.NewPolicy()
+	p.Name = "default"
+	return p
+}
+
+// RuleStore exposes the on-disk store for the management API.
+func (rt *Runtime) RuleStore() *rules.Store { return rt.ruleStore }
 
 // ReloadPolicies re-reads every policies/*.json file immediately (also
 // invoked automatically by the fsnotify watcher Start begins).

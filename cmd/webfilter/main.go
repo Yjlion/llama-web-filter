@@ -31,6 +31,7 @@ func main() {
 		newProxyCmd(),
 		newMgmtCmd(),
 		newLLMCmd(),
+		newRulesCmd(),
 		newCategoriesCmd(),
 		newOuiCmd(),
 		newServiceCmd(),

@@ -36,6 +36,7 @@
       "nav.tools": "Tools",
       "nav.settings": "Settings",
       "nav.llm": "LLM",
+      "nav.rules": "Rules",
       "nav.decisions": "Decisions",
       "nav.downloadCert": "Download CA Cert",
       "nav.signOut": "Sign out",
@@ -55,6 +56,7 @@
       "doc.tools": "Tools — WebFilter Proxy",
       "doc.login": "Sign in — WebFilter Proxy",
       "doc.llm": "LLM — WebFilter Proxy",
+      "doc.rules": "Rules — WebFilter Proxy",
       "doc.decisions": "Decisions — WebFilter Proxy",
 
       "th.name": "Name",

@@ -55,6 +55,7 @@ func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *sta
 		addons.ManagementAccess{},
 		authGate,
 		addons.PolicyRouter{},
+		addons.RuleEvaluator{},
 		addons.MitmControl{},
 		addons.UrlFilter{},
 		addons.QuicBlocker{},

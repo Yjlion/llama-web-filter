@@ -13,8 +13,10 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/categories"
 	"github.com/yjlion/llama-web-filter/internal/certs"
 	"github.com/yjlion/llama-web-filter/internal/config"
+	"github.com/yjlion/llama-web-filter/internal/llm/client"
 	"github.com/yjlion/llama-web-filter/internal/logstore"
 	"github.com/yjlion/llama-web-filter/internal/models"
+	"github.com/yjlion/llama-web-filter/internal/policy/rules"
 )
 
 // Server holds everything the API routes need. Settings are cached
@@ -59,6 +61,15 @@ type Server struct {
 	// Decisions drives /api/decisions/*: the verdict cache viewer and
 	// override controls. Set by `run`; nil under standalone `mgmt`.
 	Decisions DecisionStore
+
+	// Rules is the natural-language rules store (rules.json next to
+	// settings.json). Always set.
+	Rules *rules.Store
+
+	// LLMClient returns the chat client for rule compilation, or nil when
+	// the model is not ready; the parser fallback is used then. Set by
+	// `run`; nil under standalone `mgmt`.
+	LLMClient func() *client.Client
 
 	// ForcePlaintext makes ServeMgmt ignore mgmt_tls and serve plain HTTP.
 	// Set by the Android path (mobile/): the WebView that renders this UI has
@@ -128,6 +139,7 @@ func NewServer(settingsPath string) (*Server, error) {
 		Logs:         logs,
 		CA:           ca,
 		Categories:   categories.NewStore(s.CategoriesDir),
+		Rules:        rules.NewStore(rules.PathFor(settingsPath)),
 		StartedAt:    time.Now(),
 		settings:     s,
 	}, nil
@@ -195,6 +207,7 @@ func (s *Server) Router() *chi.Mux {
 	s.registerOpsRoutes(r)
 	s.registerLLMRoutes(r)
 	s.registerDecisionRoutes(r)
+	s.registerRulesRoutes(r)
 	s.registerCertsRoutes(r)
 	s.registerCategoriesRoutes(r)
 	s.registerBackupRoutes(r)

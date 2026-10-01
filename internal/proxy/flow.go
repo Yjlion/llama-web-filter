@@ -60,6 +60,9 @@ type FlowContext struct {
 	WFLogged bool
 
 	Policy *models.Policy
+	// RulesApplied lists the ids of the natural-language rules the
+	// RuleEvaluator overlaid onto Policy for this flow (empty when none).
+	RulesApplied []string
 }
 
 // Frontend values for FlowContext.Frontend.
