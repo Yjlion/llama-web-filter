@@ -26,16 +26,6 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/proxy"
 )
 
-// ImageDetector scores image bytes for NSFW content, returning a
-// probability in [0,1] (ok=false if scoring failed/unavailable) - mirrors
-// MLScorer's shape. The pure-Go GantMan/nsfw_model backend
-// (internal/classify/image) implements this; a nil Detector on
-// ImageClassifier means "never NSFW" - matches the Python original's
-// fail-open behavior when the nudenet package isn't available.
-type ImageDetector interface {
-	Score(imageBytes []byte) (score float64, ok bool)
-}
-
 // minImageBytes is a cheap floor to discard genuine tracking pixels/
 // spacers without decoding - real filtering is gated on pixel dimensions
 // (imageTooSmall), since heavily compressed thumbnails can be only a few
@@ -45,33 +35,49 @@ const minImageBytes = 1024
 // ImageClassifier detects and blurs/blocks/checkerboards NSFW images.
 // Ported from proxy/addons/image_classifier.py.
 type ImageClassifier struct {
-	// Detector is the optional NSFW scoring backend; nil means every image
-	// passes through unmodified.
-	Detector ImageDetector
+	// Classifier is the verdict backend; nil means every image passes
+	// through unmodified.
+	Classifier ContentClassifier
 }
 
 func (ImageClassifier) Name() string { return "image_classifier" }
 
-func isNSFW(detector ImageDetector, imageBytes []byte, threshold float64) bool {
-	if detector == nil {
-		return false
+// decide asks the backend about one image and maps the answer (or its
+// absence) to the action to apply: "" for pass-through, else one of the
+// ImageClassifierAction values.
+func (ic ImageClassifier) decide(fc *proxy.FlowContext, cfg models.ImageClassifierConfig, imageBytes []byte, url string) models.ImageClassifierAction {
+	if ic.Classifier == nil {
+		return fallbackImageAction(cfg.OnUnavailable)
 	}
 	started := time.Now()
-	score, ok := detector.Score(imageBytes)
-	result := metrics.ResultClean
+	v := ic.Classifier.ClassifyImage(fc.Request.Context(), ImageRequest{URL: url, Data: imageBytes, Budget: budgetFor(fc, cfg.BudgetMs, "image")})
 	switch {
-	case !ok:
-		// An image that cannot be decoded scores ok=false, which reads as
-		// "not NSFW" and passes through unfiltered - the documented
-		// fail-open behaviour for formats no registered decoder handles
-		// (AVIF, animated WebP). Counting it as an error is what makes that
-		// visible instead of silent.
-		result = metrics.ResultError
-	case score >= threshold:
-		result = metrics.ResultNSFW
+	case v.Known:
+		if v.Adult || v.Score >= cfg.Threshold {
+			metrics.ObserveClassifier("image", started, metrics.ResultNSFW)
+			return cfg.Action
+		}
+		metrics.ObserveClassifier("image", started, metrics.ResultClean)
+		return ""
+	case v.TimedOut:
+		metrics.ObserveClassifier("image", started, metrics.ResultTimeout)
+		return fallbackImageAction(cfg.OnTimeout)
+	default:
+		metrics.ObserveClassifier("image", started, metrics.ResultError)
+		return fallbackImageAction(cfg.OnUnavailable)
 	}
-	metrics.ObserveClassifier("image", started, result)
-	return ok && score >= threshold
+}
+
+func fallbackImageAction(f models.FallbackAction) models.ImageClassifierAction {
+	switch f {
+	case models.FallbackBlur:
+		return models.ImageActionBlur
+	case models.FallbackCheckerboard:
+		return models.ImageActionCheckerboard
+	case models.FallbackBlock:
+		return models.ImageActionBlock
+	}
+	return ""
 }
 
 // blurImage heavily blurs the entire image, radius scaled to its size.
@@ -205,11 +211,12 @@ func (ic ImageClassifier) filterImageResponse(fc *proxy.FlowContext, cfg models.
 	if imageTooSmall(body, cfg.MinDimension) {
 		return
 	}
-	if !isNSFW(ic.Detector, body, cfg.Threshold) {
+	action := ic.decide(fc, cfg, body, fc.Request.URL.String())
+	if action == "" {
 		return
 	}
 
-	newBody, ctype := replacementImage(body, cfg.Action)
+	newBody, ctype := replacementImage(body, action)
 	fc.ResponseBody = newBody
 	fc.Response.Header.Set("Content-Type", ctype)
 	fc.Response.Header.Set("Content-Length", strconv.Itoa(len(newBody)))
@@ -289,7 +296,7 @@ func decodeInlineImage(uri []byte) []byte {
 // JS-string, or JSON-string contexts. Safe images and undecodable matches
 // are left byte-for-byte intact.
 func (ic ImageClassifier) filterInlineImages(fc *proxy.FlowContext, cfg models.ImageClassifierConfig) {
-	if ic.Detector == nil {
+	if ic.Classifier == nil {
 		return
 	}
 	body := fc.ResponseBody
@@ -308,10 +315,11 @@ func (ic ImageClassifier) filterInlineImages(fc *proxy.FlowContext, cfg models.I
 		if imageTooSmall(img, cfg.MinDimension) {
 			continue
 		}
-		if !isNSFW(ic.Detector, img, cfg.Threshold) {
+		action := ic.decide(fc, cfg, img, fc.Request.URL.String()+"#inline")
+		if action == "" {
 			continue
 		}
-		repl, mime := replacementImage(img, cfg.Action)
+		repl, mime := replacementImage(img, action)
 		out.Write(body[last:m[0]])
 		out.WriteString("data:")
 		out.WriteString(mime)

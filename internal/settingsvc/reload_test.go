@@ -96,9 +96,9 @@ func TestDiffSettingsComparesCompositeValues(t *testing.T) {
 func TestRestartRequiredOnlyListsColdFields(t *testing.T) {
 	old := models.NewGlobalSettings()
 	next := old
-	next.UILanguage = "fr"        // hot
-	next.ProxyAuthEnabled = true  // hot
-	next.LogsDir = "/var/log/wf"  // cold
+	next.UILanguage = "fr"       // hot
+	next.ProxyAuthEnabled = true // hot
+	next.LogsDir = "/var/log/wf" // cold
 	next.LogRetentionDays = 7    // cold
 
 	got := RestartRequired(old, next)

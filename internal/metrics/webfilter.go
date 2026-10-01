@@ -76,6 +76,45 @@ var (
 		nil,
 	)
 
+	// VerdictOutcomes counts how each classification request was answered:
+	// cache, near (near-duplicate image), site (learned site verdict),
+	// prefilter, model, timeout, unavailable.
+	VerdictOutcomes = Default.NewCounterVec(
+		"webfilter_verdict_outcomes_total",
+		"How classification requests were answered, by kind and outcome.",
+		[]string{"kind", "outcome"},
+	)
+
+	// VerdictJobDuration measures one queued model job end to end.
+	VerdictJobDuration = Default.NewHistogramVec(
+		"webfilter_verdict_job_duration_seconds",
+		"Wall time of one model job in the verdict queue, by kind.",
+		[]string{"kind"},
+		nil,
+	)
+
+	// VerdictErrors counts model jobs that failed.
+	VerdictErrors = Default.NewCounterVec(
+		"webfilter_verdict_errors_total",
+		"Model jobs that returned an error, by kind.",
+		[]string{"kind"},
+	)
+
+	// VerdictCoalesced counts requests that joined an in-flight job for the
+	// same content instead of starting another.
+	VerdictCoalesced = Default.NewCounterVec(
+		"webfilter_verdict_coalesced_total",
+		"Classification requests that shared an in-flight job, by kind.",
+		[]string{"kind"},
+	)
+
+	// VerdictDropped counts requests refused because the queue was full.
+	VerdictDropped = Default.NewCounterVec(
+		"webfilter_verdict_dropped_total",
+		"Classification requests refused because the queue was full, by kind.",
+		[]string{"kind"},
+	)
+
 	// UpstreamErrors counts failed upstream fetches (DNS failure, refused
 	// connection, TLS failure, timeout). A rising rate here is the proxy
 	// failing to reach the internet, not the proxy filtering anything.
@@ -134,7 +173,8 @@ func ObserveClassifier(classifier string, started time.Time, result string) {
 
 // Classifier result label values.
 const (
-	ResultNSFW  = "nsfw"
-	ResultClean = "clean"
-	ResultError = "error"
+	ResultNSFW    = "nsfw"
+	ResultClean   = "clean"
+	ResultError   = "error"
+	ResultTimeout = "timeout"
 )

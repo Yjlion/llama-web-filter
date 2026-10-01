@@ -2,6 +2,7 @@ package addons_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"image"
 	"image/color"
@@ -17,14 +18,32 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/webptest"
 )
 
-// fakeDetector always reports the given score for every image.
+// fakeDetector always reports the given score for every image; ok=false
+// means the backend is unavailable.
 type fakeDetector struct {
 	score float64
 	ok    bool
 }
 
-func (d fakeDetector) Score(imageBytes []byte) (float64, bool) {
-	return d.score, d.ok
+func (d fakeDetector) ClassifyImage(_ context.Context, req addons.ImageRequest) addons.Verdict {
+	if !d.ok {
+		return addons.Verdict{Unavailable: true}
+	}
+	return addons.Verdict{Known: true, Score: d.score, Adult: d.score >= 0.9, Source: "stub"}
+}
+
+func (d fakeDetector) ClassifyText(_ context.Context, req addons.TextRequest) addons.Verdict {
+	return addons.Verdict{Known: true, Score: 0, Source: "stub"}
+}
+
+// timeoutDetector reports a timeout for every image.
+type timeoutDetector struct{}
+
+func (timeoutDetector) ClassifyImage(context.Context, addons.ImageRequest) addons.Verdict {
+	return addons.Verdict{TimedOut: true}
+}
+func (timeoutDetector) ClassifyText(context.Context, addons.TextRequest) addons.Verdict {
+	return addons.Verdict{TimedOut: true}
 }
 
 // testJPEG builds a solid-color JPEG of the given size, padded past the
@@ -62,7 +81,7 @@ func TestImageClassifierBlursNSFWImage(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.WFAction != "modified" || fc.WFComponent != "image_classifier" {
@@ -108,7 +127,7 @@ func TestImageClassifierFiltersWebPResponse(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.WFAction != "modified" || fc.WFComponent != "image_classifier" {
@@ -143,7 +162,7 @@ func TestImageClassifierSkipsSmallWebP(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.WFAction != "" {
@@ -164,7 +183,7 @@ func TestImageClassifierCheckerboardAction(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.Response.Header.Get("Content-Type") != "image/png" {
@@ -189,7 +208,7 @@ func TestImageClassifierBlockAction(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.Response.Header.Get("Content-Type") != "image/gif" {
@@ -210,7 +229,7 @@ func TestImageClassifierSkipsBelowThreshold(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.5, ok: true}} // below threshold
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.5, ok: true}} // below threshold
 	ic.HandleResponse(fc)
 
 	if !bytes.Equal(fc.ResponseBody, body) {
@@ -227,11 +246,40 @@ func TestImageClassifierSkipsWhenNotOK(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.99, ok: false}} // scoring failed/unavailable
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.99, ok: false}} // scoring failed/unavailable
 	ic.HandleResponse(fc)
 
 	if !bytes.Equal(fc.ResponseBody, body) {
-		t.Error("did not expect modification when the detector reports ok=false")
+		t.Error("did not expect modification when the backend is unavailable (on_unavailable defaults to allow)")
+	}
+}
+
+func TestImageClassifierAppliesOnTimeoutFallback(t *testing.T) {
+	rt := newTestRuntime(t)
+	body := testJPEG(t, 200, 200)
+	policy, resp := newImageFlow(t, body)
+	fc := newFlow(t, rt, "http://example.com/pic.jpg")
+	fc.Response = resp
+	fc.ResponseBody = body
+	fc.Policy = policy
+
+	// Default on_timeout is blur: the browser gets a blurred stand-in while
+	// the model finishes in the background.
+	addons.ImageClassifier{Classifier: timeoutDetector{}}.HandleResponse(fc)
+	if bytes.Equal(fc.ResponseBody, body) || fc.Response.Header.Get("Content-Type") != "image/jpeg" {
+		t.Fatal("expected the on_timeout blur fallback to replace the image")
+	}
+
+	// on_timeout=allow passes the original through.
+	fc2 := newFlow(t, rt, "http://example.com/pic.jpg")
+	fc2.Response = &http.Response{Header: http.Header{"Content-Type": []string{"image/jpeg"}}}
+	fc2.ResponseBody = body
+	p2 := *policy
+	p2.ImageClassifier.OnTimeout = models.FallbackAllow
+	fc2.Policy = &p2
+	addons.ImageClassifier{Classifier: timeoutDetector{}}.HandleResponse(fc2)
+	if !bytes.Equal(fc2.ResponseBody, body) {
+		t.Fatal("on_timeout=allow must pass the image through")
 	}
 }
 
@@ -244,7 +292,7 @@ func TestImageClassifierSkipsSmallImages(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.99, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.99, ok: true}}
 	ic.HandleResponse(fc)
 
 	if !bytes.Equal(fc.ResponseBody, body) {
@@ -261,7 +309,7 @@ func TestImageClassifierSkipsTinyByteFloor(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.99, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.99, ok: true}}
 	ic.HandleResponse(fc)
 
 	if !bytes.Equal(fc.ResponseBody, body) {
@@ -311,7 +359,7 @@ func TestImageClassifierReplacesInlineNSFWDataURI(t *testing.T) {
 	fc.ResponseBody = []byte(html)
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.WFAction != "modified" || fc.WFComponent != "image_classifier" {
@@ -365,7 +413,7 @@ func TestImageClassifierReplacesInlineWebPDataURI(t *testing.T) {
 	fc.ResponseBody = []byte(html)
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.WFAction != "modified" {
@@ -394,7 +442,7 @@ func TestImageClassifierReplacesEscapedInlineDataURI(t *testing.T) {
 	fc.ResponseBody = []byte(js)
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if fc.WFAction != "modified" {
@@ -424,7 +472,7 @@ func TestImageClassifierInlineBelowThresholdUntouched(t *testing.T) {
 	fc.ResponseBody = []byte(html)
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.5, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.5, ok: true}}
 	ic.HandleResponse(fc)
 
 	if string(fc.ResponseBody) != html {
@@ -445,7 +493,7 @@ func TestImageClassifierInlineIgnoresNonScannableContentType(t *testing.T) {
 	fc.ResponseBody = []byte(body)
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.9, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.9, ok: true}}
 	ic.HandleResponse(fc)
 
 	if string(fc.ResponseBody) != body {
@@ -463,7 +511,7 @@ func TestImageClassifierDisabledIsNoop(t *testing.T) {
 	fc.ResponseBody = body
 	fc.Policy = policy
 
-	ic := addons.ImageClassifier{Detector: fakeDetector{score: 0.99, ok: true}}
+	ic := addons.ImageClassifier{Classifier: fakeDetector{score: 0.99, ok: true}}
 	ic.HandleResponse(fc)
 
 	if !bytes.Equal(fc.ResponseBody, body) {

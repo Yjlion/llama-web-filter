@@ -1,6 +1,7 @@
 package addons_test
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -114,7 +115,7 @@ func TestTextClassifierMLScorerUsedBelowKeywordThreshold(t *testing.T) {
 	policy.TextClassifier.Threshold = 0.5
 	fc.Policy = &policy
 
-	tc := addons.TextClassifier{Scorer: stubScorer{score: 0.9}}
+	tc := addons.TextClassifier{Classifier: stubScorer{score: 0.9}}
 	tc.HandleResponse(fc)
 
 	if !strings.Contains(string(fc.ResponseBody), "Access Blocked") {
@@ -134,7 +135,7 @@ func TestTextClassifierMLScorerBlocksBelowKeywordThreshold(t *testing.T) {
 	policy.TextClassifier.Threshold = 0.8
 	fc.Policy = &policy
 
-	tc := addons.TextClassifier{Scorer: stubScorer{score: 0.95}}
+	tc := addons.TextClassifier{Classifier: stubScorer{score: 0.95}}
 	tc.HandleResponse(fc)
 
 	if !strings.Contains(string(fc.ResponseBody), "Access Blocked") {
@@ -169,7 +170,7 @@ func TestTextClassifierIncludeOnlyAndExcludeStillGateScoring(t *testing.T) {
 			fc.Policy = &policy
 			original := string(fc.ResponseBody)
 
-			addons.TextClassifier{Scorer: stubScorer{score: 0.99}}.HandleResponse(fc)
+			addons.TextClassifier{Classifier: stubScorer{score: 0.99}}.HandleResponse(fc)
 
 			if string(fc.ResponseBody) != original {
 				t.Fatal("expected include/exclude gating to skip text classification")
@@ -180,4 +181,41 @@ func TestTextClassifierIncludeOnlyAndExcludeStillGateScoring(t *testing.T) {
 
 type stubScorer struct{ score float64 }
 
-func (s stubScorer) Score(text string) (float64, bool) { return s.score, true }
+func (s stubScorer) ClassifyText(_ context.Context, req addons.TextRequest) addons.Verdict {
+	return addons.Verdict{Known: true, Score: s.score, Adult: s.score >= 0.5, Source: "stub"}
+}
+
+func (s stubScorer) ClassifyImage(_ context.Context, req addons.ImageRequest) addons.Verdict {
+	return addons.Verdict{Known: true, Score: 0, Source: "stub"}
+}
+
+type timeoutScorer struct{}
+
+func (timeoutScorer) ClassifyText(context.Context, addons.TextRequest) addons.Verdict {
+	return addons.Verdict{TimedOut: true}
+}
+func (timeoutScorer) ClassifyImage(context.Context, addons.ImageRequest) addons.Verdict {
+	return addons.Verdict{TimedOut: true}
+}
+
+func TestTextClassifierOnTimeoutFallback(t *testing.T) {
+	rt := newTestRuntime(t)
+	html := "<html><body>" + strings.Repeat("Plenty of ordinary page text for the classifier to look at. ", 5) + "</body></html>"
+	for _, tc := range []struct {
+		fallback models.FallbackAction
+		blocked  bool
+	}{{models.FallbackAllow, false}, {models.FallbackBlock, true}} {
+		fc := newFlow(t, rt, "http://example.com/page")
+		fc.Response = &http.Response{Header: http.Header{"Content-Type": []string{"text/html"}}}
+		fc.ResponseBody = []byte(html)
+		policy := models.NewPolicy()
+		policy.TextClassifier.Enabled = true
+		policy.TextClassifier.OnTimeout = tc.fallback
+		fc.Policy = &policy
+		addons.TextClassifier{Classifier: timeoutScorer{}}.HandleResponse(fc)
+		got := strings.Contains(string(fc.ResponseBody), "Access Blocked")
+		if got != tc.blocked {
+			t.Errorf("on_timeout=%s: blocked=%v want %v", tc.fallback, got, tc.blocked)
+		}
+	}
+}

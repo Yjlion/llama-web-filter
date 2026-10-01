@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"errors"
 	"image"
-	"image/jpeg"
 	_ "image/gif"
+	"image/jpeg"
 	_ "image/png"
 
 	"github.com/disintegration/imaging"

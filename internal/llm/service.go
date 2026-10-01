@@ -208,10 +208,15 @@ func (s *Service) watchExternal(ctx context.Context) {
 			s.lastErr = "external server not healthy: " + s.cfg.ExternalURL
 		}
 		s.mu.Unlock()
+		// Poll quickly until the server is up, then back off.
+		wait := 10 * time.Second
+		if !ok {
+			wait = 2 * time.Second
+		}
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(10 * time.Second):
+		case <-time.After(wait):
 		}
 	}
 }

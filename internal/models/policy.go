@@ -55,13 +55,45 @@ type TextClassifierConfig struct {
 	Threshold   float64  `json:"threshold"`
 	Exclude     []string `json:"exclude"`
 	IncludeOnly []string `json:"include_only"`
+	// OnTimeout is what happens when the model has not answered within the
+	// budget on a page's first sighting: "allow" (default) or "block".
+	OnTimeout FallbackAction `json:"on_timeout"`
+	// OnUnavailable is what happens when no model is available at all.
+	OnUnavailable FallbackAction `json:"on_unavailable"`
+	// BudgetMs overrides the global llm.budget.text_ms for this policy
+	// (0 = use the global value).
+	BudgetMs int `json:"budget_ms"`
+}
+
+// FallbackAction is a classifier's behaviour when no verdict is available.
+type FallbackAction string
+
+const (
+	FallbackAllow        FallbackAction = "allow"
+	FallbackBlock        FallbackAction = "block"
+	FallbackBlur         FallbackAction = "blur"         // images only
+	FallbackCheckerboard FallbackAction = "checkerboard" // images only
+)
+
+func normalizeFallback(v FallbackAction, def FallbackAction, image bool) FallbackAction {
+	switch v {
+	case FallbackAllow, FallbackBlock:
+		return v
+	case FallbackBlur, FallbackCheckerboard:
+		if image {
+			return v
+		}
+	}
+	return def
 }
 
 func NewTextClassifierConfig() TextClassifierConfig {
 	return TextClassifierConfig{
-		Threshold:   0.80,
-		Exclude:     []string{},
-		IncludeOnly: []string{},
+		Threshold:     0.80,
+		Exclude:       []string{},
+		IncludeOnly:   []string{},
+		OnTimeout:     FallbackAllow,
+		OnUnavailable: FallbackAllow,
 	}
 }
 
@@ -95,6 +127,19 @@ func (c *TextClassifierConfig) UnmarshalJSON(data []byte) error {
 			return err
 		}
 	}
+	if v, ok := raw["on_timeout"]; ok {
+		_ = json.Unmarshal(v, &c.OnTimeout)
+	}
+	if v, ok := raw["on_unavailable"]; ok {
+		_ = json.Unmarshal(v, &c.OnUnavailable)
+	}
+	if v, ok := raw["budget_ms"]; ok {
+		if i, err := decodeJSONInt(v); err == nil && i >= 0 {
+			c.BudgetMs = i
+		}
+	}
+	c.OnTimeout = normalizeFallback(c.OnTimeout, FallbackAllow, false)
+	c.OnUnavailable = normalizeFallback(c.OnUnavailable, FallbackAllow, false)
 	return nil
 }
 
@@ -115,15 +160,30 @@ type ImageClassifierConfig struct {
 	MinDimension int                   `json:"min_dimension"`
 	Exclude      []string              `json:"exclude"`
 	IncludeOnly  []string              `json:"include_only"`
+	// OnTimeout is applied to an image whose verdict did not arrive within
+	// the budget: "allow", "blur" (default), "checkerboard" or "block". The
+	// verdict still lands in the cache for the next load.
+	OnTimeout FallbackAction `json:"on_timeout"`
+	// OnUnavailable is applied when no model (or no vision model) is
+	// available: default "allow".
+	OnUnavailable FallbackAction `json:"on_unavailable"`
+	// BudgetMs overrides the global llm.budget.image_ms (0 = global).
+	BudgetMs int `json:"budget_ms"`
+	// Prefetch scores the images a page references before the browser
+	// requests them, so they are served from cache. Default on.
+	Prefetch bool `json:"prefetch"`
 }
 
 func NewImageClassifierConfig() ImageClassifierConfig {
 	return ImageClassifierConfig{
-		Action:       ImageActionBlur,
-		Threshold:    0.4,
-		MinDimension: 100,
-		Exclude:      []string{},
-		IncludeOnly:  []string{},
+		Action:        ImageActionBlur,
+		Threshold:     0.4,
+		MinDimension:  100,
+		Exclude:       []string{},
+		IncludeOnly:   []string{},
+		OnTimeout:     FallbackBlur,
+		OnUnavailable: FallbackAllow,
+		Prefetch:      true,
 	}
 }
 
@@ -169,6 +229,22 @@ func (c *ImageClassifierConfig) UnmarshalJSON(data []byte) error {
 			return err
 		}
 	}
+	if v, ok := raw["on_timeout"]; ok {
+		_ = json.Unmarshal(v, &c.OnTimeout)
+	}
+	if v, ok := raw["on_unavailable"]; ok {
+		_ = json.Unmarshal(v, &c.OnUnavailable)
+	}
+	if v, ok := raw["budget_ms"]; ok {
+		if i, err := decodeJSONInt(v); err == nil && i >= 0 {
+			c.BudgetMs = i
+		}
+	}
+	if v, ok := raw["prefetch"]; ok {
+		_ = json.Unmarshal(v, &c.Prefetch)
+	}
+	c.OnTimeout = normalizeFallback(c.OnTimeout, FallbackBlur, true)
+	c.OnUnavailable = normalizeFallback(c.OnUnavailable, FallbackAllow, true)
 	return nil
 }
 

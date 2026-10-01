@@ -153,7 +153,7 @@ func ProbeAccel() Accel {
 	return AccelCPU
 }
 
-func exists(p string) bool { _, err := os.Stat(p); return err == nil }
+func exists(p string) bool   { _, err := os.Stat(p); return err == nil }
 func lookPath(n string) bool { _, err := exec.LookPath(n); return err == nil }
 
 // ServerBinaryName is the llama-server executable name on this OS.

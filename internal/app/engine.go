@@ -31,14 +31,14 @@ import (
 // response-side filters (QUIC-blocking, YouTube, text/image
 // classification), with request logging last so it observes the final
 // decision.
-// Classifiers carries the content-classification backends the pipeline's
-// text and image addons call into. Both are optional: a nil backend means
-// the corresponding addon passes content through unmodified (keyword-only
-// for text). In llama-web-filter these are backed by the edge LLM verdict
-// service rather than embedded statistical models.
+// Classifiers carries the content-classification backend the pipeline's
+// text and image addons call into, and the optional image prefetcher. A
+// nil Classifier means the addons pass content through (keyword-only for
+// text). In llama-web-filter it is the verdict service in front of the
+// edge LLM rather than embedded statistical models.
 type Classifiers struct {
-	Text  addons.MLScorer
-	Image addons.ImageDetector
+	Classifier addons.ContentClassifier
+	Prefetcher addons.ImagePrefetcher
 }
 
 func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *state.Runtime, error) {
@@ -61,8 +61,8 @@ func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *sta
 		addons.DohFilter{},
 		addons.SafeSearch{},
 		addons.YouTubeFilter{},
-		addons.TextClassifier{Scorer: cls.Text},
-		addons.ImageClassifier{Detector: cls.Image},
+		addons.TextClassifier{Classifier: cls.Classifier, Prefetcher: cls.Prefetcher},
+		addons.ImageClassifier{Classifier: cls.Classifier},
 		addons.RequestLogger{},
 	})
 

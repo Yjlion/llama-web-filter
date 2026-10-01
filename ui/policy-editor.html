@@ -55,6 +55,10 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
           <span data-i18n="nav.llm">LLM</span>
         </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
         <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <span data-i18n="nav.settings">Settings</span>
@@ -454,6 +458,26 @@
                 <span data-i18n="ed.moreSensitive">More sensitive (0.5)</span><span data-i18n="ed.morePrecise">More precise (1.0)</span>
               </div>
             </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is slow (timeout)</label>
+                <select x-model="policy.text_classifier.on_timeout" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Allow the page, cache the verdict</option>
+                  <option value="block">Block until classified</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is unavailable</label>
+                <select x-model="policy.text_classifier.on_unavailable" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Allow</option>
+                  <option value="block">Block</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">Wait budget (ms, 0 = global)</label>
+                <input type="number" min="0" step="100" x-model.number="policy.text_classifier.budget_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+            </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
@@ -519,6 +543,34 @@
                      class="w-32 border border-gray-300 rounded px-2 py-1 text-sm" />
               <p class="text-xs text-gray-400 mt-1" data-i18n="ed.minDimHelp">Skip images whose largest side is under this many pixels (favicons, icons). Lower it to catch small thumbnails like Google image search (~100). 0 = classify everything.</p>
             </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is slow (timeout)</label>
+                <select x-model="policy.image_classifier.on_timeout" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="blur">Blur, cache the verdict</option>
+                  <option value="checkerboard">Checkerboard, cache the verdict</option>
+                  <option value="block">Blank image, cache the verdict</option>
+                  <option value="allow">Show the image, cache the verdict</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is unavailable</label>
+                <select x-model="policy.image_classifier.on_unavailable" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Show the image</option>
+                  <option value="blur">Blur</option>
+                  <option value="checkerboard">Checkerboard</option>
+                  <option value="block">Blank image</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">Wait budget (ms, 0 = global)</label>
+                <input type="number" min="0" step="100" x-model.number="policy.image_classifier.budget_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.image_classifier.prefetch" />
+              Pre-score a page's images before the browser requests them (warms the cache; costs extra model time on first visit)
+            </label>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
@@ -535,7 +587,7 @@
                 <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path</p>
               </div>
             </div>
-            <p class="text-xs text-gray-400" data-i18n="ed.imgRequiresMitm">Requires MITM active for the site. NudeNet model downloads ~90 MB on first use.</p>
+            <p class="text-xs text-gray-400">Requires MITM active for the site. Verdicts come from the local LLM (see the LLM page) and are cached, so a picture is only ever judged once.</p>
           </div>
         </div>
 
@@ -803,6 +855,10 @@
               const res = await fetch(`/api/policies/${encodeURIComponent(editName)}`);
               if (res.ok) {
                 this.policy = await res.json();
+                const tcd = { on_timeout: 'allow', on_unavailable: 'allow', budget_ms: 0 };
+                const icd = { on_timeout: 'blur', on_unavailable: 'allow', budget_ms: 0, prefetch: true };
+                this.policy.text_classifier = Object.assign({}, tcd, this.policy.text_classifier || {});
+                this.policy.image_classifier = Object.assign({}, icd, this.policy.image_classifier || {});
                 // Backfill fields that older policy files may lack.
                 this.policy.source_macs = this.policy.source_macs || [];
                 this.policy.schedule = this.policy.schedule || { enabled: false, active_windows: [] };
@@ -873,6 +929,8 @@
           this.policy.text_classifier.threshold = num(this.policy.text_classifier.threshold, 0.8);
           this.policy.image_classifier.threshold = num(this.policy.image_classifier.threshold, 0.4);
           this.policy.image_classifier.min_dimension = Math.round(num(this.policy.image_classifier.min_dimension, 100));
+          this.policy.text_classifier.budget_ms = Math.round(num(this.policy.text_classifier.budget_ms, 0));
+          this.policy.image_classifier.budget_ms = Math.round(num(this.policy.image_classifier.budget_ms, 0));
 
           const method = this.isNew ? 'POST' : 'PUT';
           const url = this.isNew
@@ -924,8 +982,8 @@
           youtube: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
         }, exclude: [], include_only: [] },
         youtube: { enabled: false, mode: 'blacklist', channels: [], exclude: [], include_only: [], block_home: true, remove_comments: false, remove_recommendations: false },
-        text_classifier: { enabled: false, threshold: 0.8, exclude: [], include_only: [] },
-        image_classifier: { enabled: false, action: 'blur', threshold: 0.4, min_dimension: 100, exclude: [], include_only: [] },
+        text_classifier: { enabled: false, threshold: 0.8, exclude: [], include_only: [], on_timeout: 'allow', on_unavailable: 'allow', budget_ms: 0 },
+        image_classifier: { enabled: false, action: 'blur', threshold: 0.4, min_dimension: 100, exclude: [], include_only: [], on_timeout: 'blur', on_unavailable: 'allow', budget_ms: 0, prefetch: true },
         mitm: { mode: 'exclude', sites: [], ua_mode: 'off', user_agents: [] },
         block_page: { template: 'default', message: '' },
       };

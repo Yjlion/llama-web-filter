@@ -7,7 +7,10 @@ import (
 )
 
 func TestHostMatches(t *testing.T) {
-	cases := []struct{ host, pattern string; want bool }{
+	cases := []struct {
+		host, pattern string
+		want          bool
+	}{
 		{"example.com", "example.com", true},
 		{"sub.example.com", "*.example.com", true},
 		{"example.com", "*.example.com", true},

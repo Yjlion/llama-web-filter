@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/yjlion/llama-web-filter/internal/app"
+	"github.com/yjlion/llama-web-filter/internal/config"
 	"github.com/yjlion/llama-web-filter/internal/mgmtapi"
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/proxy"
@@ -13,7 +14,13 @@ import (
 
 // runProxy starts only the forward-proxy engine (no management server).
 func runProxy(ctx context.Context, settingsPath string) error {
-	eng, rt, err := app.BuildProxyEngine(settingsPath, app.Classifiers{})
+	settings, err := config.LoadSettings(settingsPath)
+	if err != nil {
+		return fmt.Errorf("load settings: %w", err)
+	}
+	stack := app.NewLLMStack(ctx, settings.LLM)
+	defer stack.Close()
+	eng, rt, err := app.BuildProxyEngine(settingsPath, stack.PipelineClassifiers())
 	if err != nil {
 		return fmt.Errorf("start proxy engine: %w", err)
 	}
@@ -57,13 +64,13 @@ func runProxyAndMgmtWith(ctx context.Context, settingsPath string, mgmtSrv *mgmt
 
 	// The LLM service comes up first (or reports why it cannot) so the
 	// pipeline's classifiers have a backend from the first request.
-	llmSvc := app.NewLLMService(ctx, mgmtSrv.Settings().LLM)
-	defer llmSvc.Stop()
-	adapter := &app.LLMAdapter{Svc: llmSvc}
-	mgmtSrv.Scanner = adapter
-	mgmtSrv.LLM = adapter
+	stack := app.NewLLMStack(ctx, mgmtSrv.Settings().LLM)
+	defer stack.Close()
+	mgmtSrv.Scanner = stack.Scanner()
+	mgmtSrv.LLM = stack.Controller()
+	mgmtSrv.Decisions = stack.Decisions()
 
-	eng, rt, err := app.BuildProxyEngine(settingsPath, adapter.PipelineClassifiers())
+	eng, rt, err := app.BuildProxyEngine(settingsPath, stack.PipelineClassifiers())
 	if err != nil {
 		mgmtSrv.Logs.Close()
 		return fmt.Errorf("start proxy engine: %w", err)

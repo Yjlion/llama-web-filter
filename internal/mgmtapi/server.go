@@ -56,6 +56,10 @@ type Server struct {
 	// Set by `run`; nil under standalone `mgmt`.
 	LLM LLMController
 
+	// Decisions drives /api/decisions/*: the verdict cache viewer and
+	// override controls. Set by `run`; nil under standalone `mgmt`.
+	Decisions DecisionStore
+
 	// ForcePlaintext makes ServeMgmt ignore mgmt_tls and serve plain HTTP.
 	// Set by the Android path (mobile/): the WebView that renders this UI has
 	// no trust path to a CA-minted management leaf, and neither does the PAC
@@ -190,6 +194,7 @@ func (s *Server) Router() *chi.Mux {
 
 	s.registerOpsRoutes(r)
 	s.registerLLMRoutes(r)
+	s.registerDecisionRoutes(r)
 	s.registerCertsRoutes(r)
 	s.registerCategoriesRoutes(r)
 	s.registerBackupRoutes(r)

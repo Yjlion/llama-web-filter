@@ -20,6 +20,7 @@ import (
 //     query parameter).
 //   - imageCDNDomains: hostnames that serve image results wholesale for
 //     this engine, blocked outright when block_images_tab is on.
+//
 // paramMatch is a query key/value pair that identifies a search tab. Some
 // engines expose the same tab through more than one URL scheme (Google's
 // current unified nav uses "udm", but "tbm" still works for old links), so
@@ -114,10 +115,10 @@ var searchEngines = []searchEngine{
 		domains:        set("duckduckgo.com", "www.duckduckgo.com", "ddg.gg"),
 		safeParamKey:   "kp",
 		safeParamValue: "1",
-		pathPrefix:   "/",
-		aiPaths:      []string{"/duckchat"},
-		imagesParams: []paramMatch{{"iar", "images"}},
-		videosParams: []paramMatch{{"iar", "videos"}},
+		pathPrefix:     "/",
+		aiPaths:        []string{"/duckchat"},
+		imagesParams:   []paramMatch{{"iar", "images"}},
+		videosParams:   []paramMatch{{"iar", "videos"}},
 	},
 	{
 		name:           "yahoo",
@@ -130,8 +131,8 @@ var searchEngines = []searchEngine{
 		videosPaths:    []string{"/video/search"},
 	},
 	{
-		name:         "brave",
-		domains:      set("search.brave.com"),
+		name:    "brave",
+		domains: set("search.brave.com"),
 		// Brave drives safe search from a cookie; the query parameter is
 		// accepted too and covers the first request, before any cookie exists.
 		safeParamKey:    "safesearch",
