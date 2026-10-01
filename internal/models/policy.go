@@ -495,6 +495,7 @@ type Policy struct {
 	Doh             DohConfig             `json:"doh"`
 	TextClassifier  TextClassifierConfig  `json:"text_classifier"`
 	ImageClassifier ImageClassifierConfig `json:"image_classifier"`
+	VideoClassifier VideoClassifierConfig `json:"video_classifier"`
 	SafeSearch      SafeSearchConfig      `json:"safesearch"`
 	YouTube         YouTubeConfig         `json:"youtube"`
 	Mitm            MitmConfig            `json:"mitm"`
@@ -513,6 +514,7 @@ func NewPolicy() Policy {
 		Doh:             NewDohConfig(),
 		TextClassifier:  NewTextClassifierConfig(),
 		ImageClassifier: NewImageClassifierConfig(),
+		VideoClassifier: NewVideoClassifierConfig(),
 		SafeSearch:      NewSafeSearchConfig(),
 		YouTube:         NewYouTubeConfig(),
 		Mitm:            NewMitmConfig(),

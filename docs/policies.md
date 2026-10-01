@@ -59,7 +59,7 @@ names** box on the same page (`kids-tablet = 10.0.0.7, aa:bb:cc:dd:ee:ff`).
 | `match.policy` | restrict to clients whose policy has this name |
 | `match.time` | `start`/`end` as HH:MM (may cross midnight), `days` as `mon`…`sun` (empty = daily) |
 | `match.sites` | `include` (only on these sites) and `exclude` (not on these); domains, `*.wildcards` or URLs with paths |
-| `target` | `adult_images`, `adult_text`, `ads`, `site`, `category`, `safesearch`, `youtube`, `internet` |
+| `target` | `adult_images`, `adult_text`, `adult_video`, `ads`, `site`, `category`, `safesearch`, `youtube`, `internet` |
 | `action` | `block`, `allow`, and for adult images also `blur` and `checkerboard` |
 | `value` | operands for `site` (hostnames), `category` (names), `youtube` (channels) |
 
@@ -75,6 +75,8 @@ shows the result for a given client and URL at this moment.
 "image_classifier": { "enabled": true, "action": "blur", "threshold": 0.4, "min_dimension": 100,
                       "on_timeout": "blur", "on_unavailable": "allow", "budget_ms": 0, "prefetch": true,
                       "exclude": [], "include_only": [] },
+"video_classifier": { "enabled": true, "threshold": 0.4, "on_timeout": "allow", "keyframes": false, "youtube": true,
+                      "exclude": [], "include_only": [] },
 "adblock":          { "enabled": true, "cosmetic": true, "classify_unknown_hosts": true, "exclude": [], "include_only": [] }
 ```
 
@@ -88,6 +90,13 @@ shows the result for a given client and URL at this moment.
 * `adblock.cosmetic` injects element-hiding CSS; `classify_unknown_hosts`
   asks the model about third-party hosts the lists do not know when they
   look like ad or tracking servers.
+* `video_classifier` judges videos through stills: the poster a page
+  declares for a `<video>`, a YouTube video's thumbnail when the player
+  response passes through (`youtube`), and, with `keyframes` on and ffmpeg
+  installed on the proxy machine, frames decoded from the stream's opening
+  seconds. A video judged adult has its sources removed from the page, its
+  YouTube player response made unplayable, and later requests for the stream
+  refused. The rule target is `adult_video`.
 
 ## Ad blocking
 

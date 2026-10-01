@@ -26,6 +26,7 @@ type Target string
 const (
 	TargetAdultImages Target = "adult_images"
 	TargetAdultText   Target = "adult_text"
+	TargetAdultVideo  Target = "adult_video"
 	TargetAds         Target = "ads"
 	TargetSite        Target = "site"     // Value lists the sites
 	TargetCategory    Target = "category" // Value lists category names
@@ -47,7 +48,7 @@ const (
 // Targets and Actions list the valid values for validation and the model's
 // schema.
 var (
-	Targets = []Target{TargetAdultImages, TargetAdultText, TargetAds, TargetSite, TargetCategory, TargetSafeSearch, TargetYouTube, TargetInternet}
+	Targets = []Target{TargetAdultImages, TargetAdultText, TargetAdultVideo, TargetAds, TargetSite, TargetCategory, TargetSafeSearch, TargetYouTube, TargetInternet}
 	Actions = []Action{ActionBlock, ActionBlur, ActionCheckerboard, ActionAllow}
 )
 
@@ -419,6 +420,8 @@ func Apply(base models.Policy, all []Rule, c Client, devices map[string][]string
 			}
 		case TargetAdultText:
 			p.TextClassifier.Enabled = r.Action != ActionAllow
+		case TargetAdultVideo:
+			p.VideoClassifier.Enabled = r.Action != ActionAllow
 		case TargetAds:
 			p.AdBlock.Enabled = r.Action != ActionAllow
 		case TargetSafeSearch:
@@ -506,6 +509,12 @@ func Describe(r Rule) string {
 			b.WriteString("Do not block adult pages")
 		} else {
 			b.WriteString("Block adult pages")
+		}
+	case TargetAdultVideo:
+		if r.Action == ActionAllow {
+			b.WriteString("Do not block adult videos")
+		} else {
+			b.WriteString("Block adult videos")
 		}
 	case TargetAds:
 		if r.Action == ActionAllow {

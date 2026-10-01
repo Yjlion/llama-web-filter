@@ -40,7 +40,7 @@ type Compiler struct {
 const systemPrompt = `You convert one sentence of a home web-filter policy into a JSON rule. Answer only with JSON matching the schema.
 
 Fields:
-- target: what the sentence is about. adult_images (nude/explicit pictures), adult_text (adult/porn web pages), ads (advertisements and trackers), site (specific websites, put the hostnames in value), category (a blocklist category name, put it in value), safesearch, youtube (channel names in value), internet (all web access).
+- target: what the sentence is about. adult_images (nude/explicit pictures), adult_text (adult/porn web pages), adult_video (adult videos/streams), ads (advertisements and trackers), site (specific websites, put the hostnames in value), category (a blocklist category name, put it in value), safesearch, youtube (channel names in value), internet (all web access).
 - action: block, allow, blur (adult_images only), checkerboard (adult_images only). "Hide", "censor", "pixelate" mean blur. "Stop", "ban", "disable", "no" mean block. "Permit", "let", "enable", "unblock" mean allow.
 - sources: who the rule is for. IP addresses, CIDR ranges, MAC addresses, device names from the list, "lan" for the whole local network, or empty for everyone. "lan", "the network", "all devices", "everyone at home" mean ["lan"].
 - time: a daily window {start:"HH:MM", end:"HH:MM", days:["mon",...]} in 24-hour time, only when the sentence gives one. "10am to 5pm" is 10:00-17:00. "school nights" are sun-thu evenings. Omit days when every day.
@@ -253,6 +253,8 @@ func (c *Compiler) compileParser(text string) (Compiled, error) {
 	}
 	lb := strings.ToLower(body)
 	switch {
+	case hasAny(lb, "adult video", "porn video", "explicit video", "adult stream", "nsfw video", "videos"):
+		r.Target = rules.TargetAdultVideo
 	case hasAny(lb, "adult image", "adult picture", "adult photo", "nude", "nudity", "explicit image", "nsfw image", "porn image", "adult pics", "images"):
 		r.Target = rules.TargetAdultImages
 	case hasAny(lb, "adult text", "adult page", "adult site", "adult content", "porn", "adult website", "explicit page", "adult material"):

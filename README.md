@@ -8,9 +8,11 @@ Nothing leaves your network.
 It is a fork of [gowebfilter](https://github.com/Yjlion/gowebfilter) that
 replaces the embedded statistical classifiers with the model, and adds:
 
-- **Adult text and images**, judged by the model: block pages, blur or blank
-  images. Every verdict is cached by content, so a picture is only ever judged
-  once; near-duplicates and whole sites are learned.
+- **Adult text, images and video**, judged by the model: block pages, blur
+  or blank images, refuse videos judged by their poster, YouTube thumbnail or
+  (with ffmpeg) decoded keyframes. Every verdict is cached by content, so a
+  picture is only ever judged once; near-duplicates and whole sites are
+  learned.
 - **Ad and tracker removal** with EasyList/EasyPrivacy (snapshot built in,
   updatable), cosmetic hiding, and the model classifying hosts the lists miss.
 - **Rules in plain language** — *Blur all adult images for 10.10.10.10 from
@@ -73,7 +75,8 @@ Go 1.26 or newer. Tests use fake model servers; nothing is downloaded.
 Functional but young. Model downloads resolve file names from Hugging Face
 at download time, so the catalog may need adjusting as repositories change;
 `webfilter llm status` and the LLM page show what happened. Video
-classification is limited to posters and thumbnails for now.
+classification works from posters, thumbnails and (optionally) ffmpeg
+keyframes; HLS/DASH segment streams are judged by their poster only.
 
 ## License
 

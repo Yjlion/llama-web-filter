@@ -74,7 +74,7 @@ func (st *LLMStack) Close() {
 
 // PipelineClassifiers is what BuildProxyEngine wires into the addons.
 func (st *LLMStack) PipelineClassifiers() Classifiers {
-	return Classifiers{Classifier: &pipelineClassifier{vs: st.Verdicts}, Prefetcher: st.Prefetch}
+	return Classifiers{Classifier: &pipelineClassifier{vs: st.Verdicts}, Prefetcher: st.Prefetch, Fetcher: st.Prefetch}
 }
 
 // Scanner is the management API's content scanner.

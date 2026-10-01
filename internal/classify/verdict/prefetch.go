@@ -2,6 +2,7 @@ package verdict
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -86,11 +87,23 @@ func (p *Prefetcher) fetchAndScore(u string, headers http.Header) {
 	defer func() { <-p.sem }()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	data, err := p.FetchImage(ctx, u, headers)
 	if err != nil {
 		return
 	}
-	for _, h := range []string{"User-Agent", "Referer", "Accept-Language"} {
+	// Zero budget: enqueue and return; the verdict lands in the cache.
+	p.svc.Image(context.Background(), ImageRequest{URL: u, Data: data, Budget: 0, Priority: 1})
+}
+
+// FetchImage downloads one image (at most MaxPrefetchBytes) with the page
+// request's identifying headers. Used for prefetching and by the video
+// classifier for posters and thumbnails.
+func (p *Prefetcher) FetchImage(ctx context.Context, u string, headers http.Header) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, h := range []string{"User-Agent", "Referer", "Accept-Language", "Cookie"} {
 		if v := headers.Get(h); v != "" {
 			req.Header.Set(h, v)
 		}
@@ -98,16 +111,18 @@ func (p *Prefetcher) fetchAndScore(u string, headers http.Header) {
 	req.Header.Set("Accept", "image/*")
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(resp.Header.Get("Content-Type"), "image/") {
-		return
+		return nil, fmt.Errorf("fetch %s: HTTP %d %s", u, resp.StatusCode, resp.Header.Get("Content-Type"))
 	}
 	data, err := io.ReadAll(io.LimitReader(resp.Body, MaxPrefetchBytes+1))
-	if err != nil || len(data) > MaxPrefetchBytes {
-		return
+	if err != nil {
+		return nil, err
 	}
-	// Zero budget: enqueue and return; the verdict lands in the cache.
-	p.svc.Image(context.Background(), ImageRequest{URL: u, Data: data, Budget: 0, Priority: 1})
+	if len(data) > MaxPrefetchBytes {
+		return nil, fmt.Errorf("fetch %s: larger than %d bytes", u, MaxPrefetchBytes)
+	}
+	return data, nil
 }

@@ -39,6 +39,7 @@ import (
 type Classifiers struct {
 	Classifier addons.ContentClassifier
 	Prefetcher addons.ImagePrefetcher
+	Fetcher    addons.ImageFetcher
 }
 
 func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *state.Runtime, error) {
@@ -65,6 +66,7 @@ func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *sta
 		addons.YouTubeFilter{},
 		addons.TextClassifier{Classifier: cls.Classifier, Prefetcher: cls.Prefetcher},
 		addons.ImageClassifier{Classifier: cls.Classifier},
+		addons.NewVideoClassifier(cls.Classifier, cls.Fetcher),
 		addons.RequestLogger{},
 	})
 
