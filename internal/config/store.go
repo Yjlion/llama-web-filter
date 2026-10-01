@@ -58,6 +58,7 @@ func NewBootstrapSettings(settingsPath string) models.GlobalSettings {
 	settings.CategoriesDir = filepath.Join(root, "categories")
 	settings.LogsDir = filepath.Join(root, "logs")
 	settings.LLM.DataDir = filepath.Join(root, "data", "llm")
+	settings.AdBlockDir = filepath.Join(root, "data", "adblock")
 	return settings
 }
 

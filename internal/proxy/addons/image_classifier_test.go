@@ -36,6 +36,10 @@ func (d fakeDetector) ClassifyText(_ context.Context, req addons.TextRequest) ad
 	return addons.Verdict{Known: true, Score: 0, Source: "stub"}
 }
 
+func (d fakeDetector) ClassifyHost(_ context.Context, req addons.HostRequest) addons.Verdict {
+	return addons.Verdict{Known: true, Score: 0, Source: "stub"}
+}
+
 // timeoutDetector reports a timeout for every image.
 type timeoutDetector struct{}
 
@@ -43,6 +47,9 @@ func (timeoutDetector) ClassifyImage(context.Context, addons.ImageRequest) addon
 	return addons.Verdict{TimedOut: true}
 }
 func (timeoutDetector) ClassifyText(context.Context, addons.TextRequest) addons.Verdict {
+	return addons.Verdict{TimedOut: true}
+}
+func (timeoutDetector) ClassifyHost(context.Context, addons.HostRequest) addons.Verdict {
 	return addons.Verdict{TimedOut: true}
 }
 

@@ -172,6 +172,10 @@ func (c *pipelineClassifier) ClassifyImage(ctx context.Context, req addons.Image
 	return toVerdict(c.vs.Image(ctx, verdict.ImageRequest{URL: req.URL, Data: req.Data, Budget: req.Budget}))
 }
 
+func (c *pipelineClassifier) ClassifyHost(ctx context.Context, req addons.HostRequest) addons.Verdict {
+	return toVerdict(c.vs.Host(ctx, verdict.HostRequest{Host: req.Host, SamplePaths: req.SamplePaths, Budget: req.Budget}))
+}
+
 // ---- mgmtapi.ContentScanner (Tools page) ----
 
 type scanner struct{ st *LLMStack }

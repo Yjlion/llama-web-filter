@@ -32,6 +32,8 @@ func TestEverySettingsFieldIsClassified(t *testing.T) {
 		"upstream_auth":      true,
 		"disable_tray":       true,
 		"llm":                true,
+		"adblock_dir":        true,
+		"adblock_sources":    true,
 	}
 
 	for _, name := range SettingsFieldNames() {

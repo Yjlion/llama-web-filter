@@ -26,6 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/yjlion/llama-web-filter/internal/adblock"
 	"github.com/yjlion/llama-web-filter/internal/categories"
 	"github.com/yjlion/llama-web-filter/internal/certs"
 	"github.com/yjlion/llama-web-filter/internal/config"
@@ -55,6 +56,8 @@ type Runtime struct {
 	policies    atomic.Pointer[[]models.Policy]
 	ruleStore   *rules.Store
 	rules       atomic.Pointer[rules.File]
+	adblock     atomic.Pointer[adblock.Engine]
+	adblockInfo atomic.Pointer[AdBlockInfo]
 	mitmBypass  atomic.Pointer[[]string] // aggregated exclude-mode mitm domains, lowercased
 	generation  atomic.Uint64            // bumped on every policy reload
 }
@@ -92,6 +95,7 @@ func New(settingsPath string) (*Runtime, error) {
 	rt.settings.Store(&s)
 	rt.ReloadPolicies()
 	rt.ReloadRules()
+	rt.ReloadAdBlock()
 	return rt, nil
 }
 
@@ -223,6 +227,56 @@ func (rt *Runtime) DefaultPolicy() models.Policy {
 	p := models.NewPolicy()
 	p.Name = "default"
 	return p
+}
+
+// AdBlockInfo describes the loaded filter lists.
+type AdBlockInfo struct {
+	Source  string            `json:"source"` // "snapshot" or "downloaded"
+	Dir     string            `json:"dir"`
+	Updated time.Time         `json:"updated,omitempty"`
+	Stats   adblock.Stats     `json:"stats"`
+	Errors  map[string]string `json:"errors,omitempty"`
+	Loaded  time.Time         `json:"loaded"`
+}
+
+// ReloadAdBlock (re)builds the ad-block engine from the lists directory,
+// falling back to the embedded snapshot when nothing has been downloaded.
+func (rt *Runtime) ReloadAdBlock() {
+	dir := rt.Settings().AdBlockDir
+	info := AdBlockInfo{Dir: dir, Loaded: time.Now()}
+	var lists []adblock.Parsed
+	if parsed, st, ok := adblock.LoadDir(dir); ok {
+		lists, info.Source, info.Updated, info.Errors = parsed, "downloaded", st.Updated, st.Errors
+	} else {
+		parsed, err := adblock.LoadSnapshot()
+		if err != nil {
+			slog.Error("adblock: embedded snapshot failed to load", "err", err)
+			return
+		}
+		lists, info.Source = parsed, "snapshot"
+	}
+	eng := adblock.Build(lists...)
+	info.Stats = eng.Stats()
+	rt.adblock.Store(eng)
+	rt.adblockInfo.Store(&info)
+	slog.Info("adblock: lists loaded", "source", info.Source, "network_rules", info.Stats.NetworkRules, "cosmetic_rules", info.Stats.CosmeticRules)
+}
+
+// SetAdBlockForTest installs an engine directly (tests build small lists).
+func (rt *Runtime) SetAdBlockForTest(e *adblock.Engine) {
+	rt.adblock.Store(e)
+	rt.adblockInfo.Store(&AdBlockInfo{Source: "test", Stats: e.Stats(), Loaded: time.Now()})
+}
+
+// AdBlock returns the current engine (nil before the first load).
+func (rt *Runtime) AdBlock() *adblock.Engine { return rt.adblock.Load() }
+
+// AdBlockStatus describes the loaded lists.
+func (rt *Runtime) AdBlockStatus() AdBlockInfo {
+	if i := rt.adblockInfo.Load(); i != nil {
+		return *i
+	}
+	return AdBlockInfo{}
 }
 
 // RuleStore exposes the on-disk store for the management API.

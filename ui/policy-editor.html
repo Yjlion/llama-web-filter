@@ -595,6 +595,46 @@
           </div>
         </div>
 
+        <!-- Ad blocking -->
+        <div class="section">
+          <div class="section-header" @click="open.ads = !open.ads">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.adblock.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900">Ad &amp; tracker blocking</div>
+                <div class="text-xs text-gray-500">Block ad and tracker requests with EasyList/EasyPrivacy and hide ad containers; the local LLM classifies hosts the lists do not know</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.ads ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.ads" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.adblock.cosmetic" />
+              Hide ad containers in pages (cosmetic filtering, injects CSS)
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.adblock.classify_unknown_hosts" />
+              Ask the local LLM about unknown third-party hosts that look like ad or tracking servers (cached per host)
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
+                <textarea x-model="adsExcludeText" @input="policy.adblock.exclude = adsExcludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="www.cnn.com&#10;shop.example"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path · no ad blocking on these sites</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.onlyApplyTo">Only Apply To</span> <span class="text-gray-400" data-i18n="ed.leaveBlankAll">(leave blank for all)</span></label>
+                <textarea x-model="adsIncludeText" @input="policy.adblock.include_only = adsIncludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="specific-site.com"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400">Filter lists are updated from Settings → Ad blocking. Blocked ad requests are counted in metrics but not written to the block log.</p>
+          </div>
+        </div>
+
         <!-- MITM Control -->
         <div class="section">
           <div class="section-header" @click="open.mitm = !open.mitm">
@@ -752,7 +792,7 @@
         macNeighbors: [],
         macScanning: false,
         macScanError: '',
-        open: { schedule: false, url: false, doh: false, safe: false, yt: false, text: false, img: false, mitm: false, bp: false },
+        open: { schedule: false, url: false, doh: false, safe: false, yt: false, text: false, img: false, ads: false, mitm: false, bp: false },
         youtubeIcon: YOUTUBE_ICON,
         // SafeSearch engines (id must match proxy/addons/safesearch.py). ai=false
         // hides the AI column for engines with no AI assistant to block.
@@ -786,6 +826,7 @@
         ytChannelsText: '',
         textExcludeText: '', textIncludeText: '',
         imgExcludeText: '', imgIncludeText: '',
+        adsExcludeText: '', adsIncludeText: '',
         mitmSitesText: '',
         mitmUserAgentsText: '',
 
@@ -863,6 +904,7 @@
                 const icd = { on_timeout: 'blur', on_unavailable: 'allow', budget_ms: 0, prefetch: true };
                 this.policy.text_classifier = Object.assign({}, tcd, this.policy.text_classifier || {});
                 this.policy.image_classifier = Object.assign({}, icd, this.policy.image_classifier || {});
+                this.policy.adblock = Object.assign({ enabled: false, cosmetic: true, classify_unknown_hosts: true, exclude: [], include_only: [] }, this.policy.adblock || {});
                 // Backfill fields that older policy files may lack.
                 this.policy.source_macs = this.policy.source_macs || [];
                 this.policy.schedule = this.policy.schedule || { enabled: false, active_windows: [] };
@@ -909,6 +951,8 @@
           this.textIncludeText = (this.policy.text_classifier.include_only || []).join('\n');
           this.imgExcludeText = (this.policy.image_classifier.exclude || []).join('\n');
           this.imgIncludeText = (this.policy.image_classifier.include_only || []).join('\n');
+          this.adsExcludeText = (this.policy.adblock.exclude || []).join('\n');
+          this.adsIncludeText = (this.policy.adblock.include_only || []).join('\n');
           this.mitmSitesText = (this.policy.mitm.sites || []).join('\n');
           this.mitmUserAgentsText = (this.policy.mitm.user_agents || []).join('\n');
         },
@@ -975,6 +1019,7 @@
         source_macs: [],
         schedule: { enabled: false, active_windows: [] },
         url_filter: { enabled: false, allow: [], block: [], mode: 'blacklist', categories: [], block_quic: true },
+        adblock: { enabled: false, cosmetic: true, classify_unknown_hosts: true, exclude: [], include_only: [] },
         doh: { enabled: false, server: 'https://1.1.1.3/dns-query', exclude: [], include_only: [] },
         safesearch: { enabled: false, engines: {
           google: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },

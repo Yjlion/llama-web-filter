@@ -19,6 +19,16 @@ import (
 type ContentClassifier interface {
 	ClassifyText(ctx context.Context, req TextRequest) Verdict
 	ClassifyImage(ctx context.Context, req ImageRequest) Verdict
+	// ClassifyHost says whether a hostname serves ads/trackers; Adult is
+	// overloaded to mean "block it".
+	ClassifyHost(ctx context.Context, req HostRequest) Verdict
+}
+
+// HostRequest is a hostname the filter lists do not know.
+type HostRequest struct {
+	Host        string
+	SamplePaths []string
+	Budget      time.Duration
 }
 
 // TextRequest is a page's extracted text.

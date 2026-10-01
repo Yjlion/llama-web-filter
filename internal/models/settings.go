@@ -80,6 +80,15 @@ type GlobalSettings struct {
 	// LLM configures the local edge model runtime; see LLMConfig.
 	LLM LLMConfig `json:"llm"`
 
+	// AdBlockDir holds downloaded filter lists (EasyList, EasyPrivacy).
+	// Empty means <project root>/data/adblock; when no lists have been
+	// downloaded yet the snapshot embedded in the binary is used.
+	AdBlockDir string `json:"adblock_dir"`
+	// AdBlockSources are the filter lists `webfilter adblock update` (and
+	// the Settings page) download. Empty means the EasyList + EasyPrivacy
+	// defaults.
+	AdBlockSources []AdBlockSource `json:"adblock_sources"`
+
 	// OuiPath is a Go-port-only optional field (documented deviation): path
 	// to an optional IEEE OUI vendor lookup table override. When empty, the
 	// app uses the embedded lookup table; `webfilter oui update` can still
@@ -101,6 +110,12 @@ type GlobalSettings struct {
 	// foreground run instead - matching Linux/macOS, which never auto-show
 	// it. Has no effect outside `webfilter run` on Windows.
 	DisableTray bool `json:"disable_tray"`
+}
+
+// AdBlockSource is one downloadable filter list.
+type AdBlockSource struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 // IcapConfig tunes the ICAP adaptation service (RFC 3507), which lets an
@@ -188,6 +203,7 @@ func NewGlobalSettings() GlobalSettings {
 		MgmtHostname:     "web.filter",
 		Icap:             NewIcapConfig(),
 		LLM:              NewLLMConfig(),
+		AdBlockSources:   []AdBlockSource{},
 	}
 }
 

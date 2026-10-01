@@ -32,6 +32,7 @@ func main() {
 		newMgmtCmd(),
 		newLLMCmd(),
 		newRulesCmd(),
+		newAdBlockCmd(),
 		newCategoriesCmd(),
 		newOuiCmd(),
 		newServiceCmd(),

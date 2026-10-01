@@ -62,6 +62,10 @@ type Server struct {
 	// override controls. Set by `run`; nil under standalone `mgmt`.
 	Decisions DecisionStore
 
+	// AdBlock drives /api/adblock/*: list status and updates. Set by
+	// `run`; nil under standalone `mgmt`.
+	AdBlock AdBlockController
+
 	// Rules is the natural-language rules store (rules.json next to
 	// settings.json). Always set.
 	Rules *rules.Store
@@ -208,6 +212,7 @@ func (s *Server) Router() *chi.Mux {
 	s.registerLLMRoutes(r)
 	s.registerDecisionRoutes(r)
 	s.registerRulesRoutes(r)
+	s.registerAdBlockRoutes(r)
 	s.registerCertsRoutes(r)
 	s.registerCategoriesRoutes(r)
 	s.registerBackupRoutes(r)

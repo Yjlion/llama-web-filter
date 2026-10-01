@@ -198,6 +198,41 @@
           <p class="text-xs text-gray-400">Data directory: <span class="font-mono" x-text="settings.llm.data_dir || '(default)'"></span></p>
         </div>
 
+        <!-- Ad blocking lists -->
+        <div id="adblock" class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Ad blocking lists</h2>
+            <p class="text-xs text-gray-500 mt-0.5">EasyList (ads) and EasyPrivacy (trackers) filter lists. A snapshot is built into the program; update to fetch the current lists. Ad blocking itself is switched on per policy or with a rule such as “Block ads on lan”.</p>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Lists</div>
+              <div class="font-medium" x-text="adblock.source === 'downloaded' ? 'downloaded' : (adblock.source === 'snapshot' ? 'built-in snapshot (' + (adblock.snapshot_date || '') + ')' : (adblock.managed === false ? 'proxy process' : '—'))"></div>
+              <div class="text-xs text-gray-400 mt-0.5" x-text="adblock.updated ? 'updated ' + new Date(adblock.updated).toLocaleString() : ''"></div>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Network rules</div>
+              <div class="font-medium" x-text="adblock.stats ? adblock.stats.network_rules : '—'"></div>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Cosmetic rules</div>
+              <div class="font-medium" x-text="adblock.stats ? adblock.stats.cosmetic_rules : '—'"></div>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Exceptions</div>
+              <div class="font-medium" x-text="adblock.stats ? adblock.stats.exceptions : '—'"></div>
+            </div>
+          </div>
+          <div x-show="adblock.errors" x-cloak class="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2" x-text="adblock.errors ? JSON.stringify(adblock.errors) : ''"></div>
+          <div class="flex items-center gap-3">
+            <button type="button" @click="updateAdblock()" :disabled="adblockUpdating || adblock.managed === false"
+                    class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <span x-text="adblockUpdating ? 'Downloading…' : 'Update lists now'"></span>
+            </button>
+            <span class="text-xs text-gray-400">Sources: <span class="font-mono" x-text="(adblock.sources || []).map(s => s.name).join(', ')"></span></span>
+          </div>
+        </div>
+
         <!-- WireGuard panel -->
         <div x-show="wg.enabled" x-cloak class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
           <div>
@@ -541,6 +576,8 @@
     function settingsPage() {
       return {
         llmCatalog: [],
+        adblock: {},
+        adblockUpdating: false,
         settings: { llm: { enabled: true, model: 'gemma-4-e2b', accel: 'auto', threads: 0, parallel_slots: 4, max_image_px: 384, external_url: '', data_dir: '', budget: { image_ms: 1500, text_ms: 2000, host_ms: 500, compile_ms: 60000 } }, proxy_listen: ['0.0.0.0:8080', 'socks5@127.0.0.1:1080'], mgmt_host: '0.0.0.0', mgmt_port: 8000, cert_dir: './certs', policies_dir: './policies', logs_dir: './logs', categories_dir: './categories', log_blocks: true, log_requests: true, log_retention_days: 30, default_policy: null, auth_enabled: false, has_password: false, pac_proxy_host: '', pac_direct_hosts: [], pac_direct_ips: [], mgmt_hostname: 'web.filter', upstream_proxy: '', upstream_auth: '', ui_language: 'en', proxy_auth_enabled: false, proxy_auth_username: '', has_proxy_auth: false },
         status: { proxy_port: null },
         newPassword: '',
@@ -620,6 +657,22 @@
           }
         },
 
+        async loadAdblock() {
+          try {
+            const r = await fetch('/api/adblock/status');
+            if (r.ok) this.adblock = await r.json();
+          } catch (e) {}
+        },
+        async updateAdblock() {
+          this.adblockUpdating = true;
+          try {
+            const r = await fetch('/api/adblock/update', { method: 'POST' });
+            const body = await r.json().catch(() => ({}));
+            if (r.ok) { this.adblock = body; this.alert = 'Filter lists updated.'; this.alertType = 'success'; }
+            else { this.alert = body.detail || 'Update failed.'; this.alertType = 'error'; }
+          } catch (e) { this.alert = 'Network error — update failed.'; this.alertType = 'error'; }
+          finally { this.adblockUpdating = false; setTimeout(() => { this.alert = ''; }, 5000); }
+        },
         async init() {
           try {
             const res = await fetch('/api/settings');
@@ -640,6 +693,7 @@
             const c = await fetch('/api/llm/catalog');
             if (c.ok) this.llmCatalog = await c.json();
           } catch (e) {}
+          await this.loadAdblock();
         },
 
         async loadStatus() {

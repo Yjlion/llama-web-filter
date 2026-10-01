@@ -189,12 +189,19 @@ func (s stubScorer) ClassifyImage(_ context.Context, req addons.ImageRequest) ad
 	return addons.Verdict{Known: true, Score: 0, Source: "stub"}
 }
 
+func (s stubScorer) ClassifyHost(_ context.Context, req addons.HostRequest) addons.Verdict {
+	return addons.Verdict{Known: true, Score: 0, Source: "stub"}
+}
+
 type timeoutScorer struct{}
 
 func (timeoutScorer) ClassifyText(context.Context, addons.TextRequest) addons.Verdict {
 	return addons.Verdict{TimedOut: true}
 }
 func (timeoutScorer) ClassifyImage(context.Context, addons.ImageRequest) addons.Verdict {
+	return addons.Verdict{TimedOut: true}
+}
+func (timeoutScorer) ClassifyHost(context.Context, addons.HostRequest) addons.Verdict {
 	return addons.Verdict{TimedOut: true}
 }
 

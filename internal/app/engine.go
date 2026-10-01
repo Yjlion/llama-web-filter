@@ -58,6 +58,7 @@ func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *sta
 		addons.RuleEvaluator{},
 		addons.MitmControl{},
 		addons.UrlFilter{},
+		addons.AdBlocker{Classifier: cls.Classifier},
 		addons.QuicBlocker{},
 		addons.DohFilter{},
 		addons.SafeSearch{},
