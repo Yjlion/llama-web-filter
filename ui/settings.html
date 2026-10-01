@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.settings">Settings — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script src="qrcode.min.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="settingsPage()" x-init="init()">
+
+  <div class="flex h-screen overflow-hidden">
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.rules">Rules</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+      <div class="px-3 py-4 border-t border-sidebar-border space-y-2">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+        <a href="/api/ca-cert" class="flex items-center gap-2 text-xs text-sidebar-muted hover:text-sidebar-ink transition-colors px-3 py-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span data-i18n="nav.downloadCert">Download CA Cert</span>
+        </a>
+        <button x-show="settings.auth_enabled && settings.has_password" x-cloak @click="logout()"
+                class="flex items-center gap-2 text-xs text-sidebar-muted hover:text-sidebar-ink transition-colors px-3 py-2 w-full">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          <span data-i18n="nav.signOut">Sign out</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 pt-6 pb-24 max-w-2xl mx-auto">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900" data-i18n="set.title">Settings</h1>
+          <p class="text-sm text-gray-500 mt-1" data-i18n="set.subtitle">Global proxy configuration</p>
+        </div>
+
+        <!-- Interface language -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-3 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900" data-i18n="set.language">Interface Language</h2>
+            <p class="text-xs text-gray-500 mt-0.5" data-i18n="set.languageDesc">Language for this management interface and the block page shown to filtered clients.</p>
+          </div>
+          <select class="wf-lang-select w-full sm:w-64 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        </div>
+
+        <!-- Proxy bind -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900" data-i18n="set.proxyListen">Proxy Listen Addresses</h2>
+            <p class="text-xs text-gray-500 mt-0.5" data-i18n="set.proxyListenDesc">Where the filtering proxy accepts connections. Add multiple to bind several addresses/ports.</p>
+          </div>
+          <div class="space-y-2">
+            <template x-for="(addr, i) in settings.proxy_listen" :key="i">
+              <div class="flex items-center gap-2">
+                <select :value="listenMode(addr)" @change="setListenMode(i, $event.target.value)"
+                        class="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-card">
+                  <option value="regular">HTTP Proxy</option>
+                  <option value="https">HTTP Proxy over TLS</option>
+                  <option value="socks4">SOCKS4</option>
+                  <option value="socks5">SOCKS5</option>
+                  <option value="tls">SOCKS5 over TLS</option>
+                  <option value="icap">ICAP service</option>
+                  <option value="icaps">ICAP service over TLS</option>
+                </select>
+                <input type="text" :value="listenAddr(addr)" @input="setListenAddr(i, $event.target.value)"
+                       placeholder="0.0.0.0:8080"
+                       class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button type="button" @click="settings.proxy_listen.splice(i, 1); refreshWireguard()"
+                        class="px-2 py-2 text-gray-400 hover:text-red-500" title="Remove">✕</button>
+              </div>
+            </template>
+            <button type="button" @click="settings.proxy_listen.push('0.0.0.0:' + freePort('regular', -1))"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium" data-i18n="set.addListen">+ Add listen address</button>
+          </div>
+          <p class="text-xs text-gray-400" data-i18n="set.listenFormat">Format: host:port. Examples: 0.0.0.0:8080 (all IPv4), [::]:8080 (all IPv6), [::1]:8080 (IPv6 localhost), 192.168.1.10:3128.</p>
+          <p class="text-xs text-gray-400">The TLS variants ("over TLS") present a certificate signed by this proxy's CA, so clients must trust the CA to connect to the proxy endpoint itself. Restart after saving changes.</p>
+        </div>
+
+        <!-- Local LLM -->
+        <div id="llm" class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Local LLM</h2>
+            <p class="text-xs text-gray-500 mt-0.5">The edge model that classifies pages and images and compiles natural-language rules. Changing the model or acceleration takes effect after a restart; download progress is on the <a href="llm.html" class="text-blue-600 hover:underline">LLM page</a>.</p>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.llm.enabled" />
+            Enable the local LLM (when off, pages and images are not classified)
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Model</label>
+              <select x-model="settings.llm.model" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <template x-for="m in llmCatalog" :key="m.id">
+                  <option :value="m.id" x-text="m.name + (m.vision ? '' : ' (text only)') + ' · ~' + m.approx_size_mb + ' MB'"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Acceleration</label>
+              <select x-model="settings.llm.accel" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="auto">Auto-detect (NVIDIA → CUDA, else Vulkan, else CPU)</option>
+                <option value="cpu">CPU only</option>
+                <option value="cuda">CUDA (NVIDIA)</option>
+                <option value="vulkan">Vulkan (AMD / Intel / NVIDIA)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Parallel slots</label>
+              <input type="number" min="1" max="16" x-model.number="settings.llm.parallel_slots" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">CPU threads (0 = auto)</label>
+              <input type="number" min="0" max="256" x-model.number="settings.llm.threads" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Max image size sent to the model (px)</label>
+              <input type="number" min="64" max="2048" x-model.number="settings.llm.max_image_px" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">External OpenAI-compatible server (optional)</label>
+              <input type="text" x-model="settings.llm.external_url" placeholder="http://127.0.0.1:8081" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p class="text-xs text-gray-400 mt-1">When set, nothing is downloaded or started; requests go to this URL instead.</p>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs font-medium text-gray-600 mb-2">Wait budgets (ms) — how long a request waits for a verdict before the policy's fallback applies</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Image</label>
+                <input type="number" min="50" x-model.number="settings.llm.budget.image_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Page text</label>
+                <input type="number" min="50" x-model.number="settings.llm.budget.text_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Host</label>
+                <input type="number" min="50" x-model.number="settings.llm.budget.host_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Rule compile</label>
+                <input type="number" min="1000" x-model.number="settings.llm.budget.compile_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400">Data directory: <span class="font-mono" x-text="settings.llm.data_dir || '(default)'"></span></p>
+        </div>
+
+        <!-- Ad blocking lists -->
+        <div id="adblock" class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Ad blocking lists</h2>
+            <p class="text-xs text-gray-500 mt-0.5">EasyList (ads) and EasyPrivacy (trackers) filter lists. A snapshot is built into the program; update to fetch the current lists. Ad blocking itself is switched on per policy or with a rule such as “Block ads on lan”.</p>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Lists</div>
+              <div class="font-medium" x-text="adblock.source === 'downloaded' ? 'downloaded' : (adblock.source === 'snapshot' ? 'built-in snapshot (' + (adblock.snapshot_date || '') + ')' : (adblock.managed === false ? 'proxy process' : '—'))"></div>
+              <div class="text-xs text-gray-400 mt-0.5" x-text="adblock.updated ? 'updated ' + new Date(adblock.updated).toLocaleString() : ''"></div>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Network rules</div>
+              <div class="font-medium" x-text="adblock.stats ? adblock.stats.network_rules : '—'"></div>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Cosmetic rules</div>
+              <div class="font-medium" x-text="adblock.stats ? adblock.stats.cosmetic_rules : '—'"></div>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div class="text-xs text-gray-500">Exceptions</div>
+              <div class="font-medium" x-text="adblock.stats ? adblock.stats.exceptions : '—'"></div>
+            </div>
+          </div>
+          <div x-show="adblock.errors" x-cloak class="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2" x-text="adblock.errors ? JSON.stringify(adblock.errors) : ''"></div>
+          <div class="flex items-center gap-3">
+            <button type="button" @click="updateAdblock()" :disabled="adblockUpdating || adblock.managed === false"
+                    class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <span x-text="adblockUpdating ? 'Downloading…' : 'Update lists now'"></span>
+            </button>
+            <span class="text-xs text-gray-400">Sources: <span class="font-mono" x-text="(adblock.sources || []).map(s => s.name).join(', ')"></span></span>
+          </div>
+        </div>
+
+        <!-- WireGuard panel -->
+        <div x-show="wg.enabled" x-cloak class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900" data-i18n="set.wireguard">WireGuard</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Endpoint: <span class="font-mono" x-text="wg.endpoint"></span></p>
+          </div>
+          <div x-show="wg.error" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2" x-text="wg.error"></div>
+          <template x-if="!wg.error && wg.conf">
+            <div class="space-y-3">
+              <textarea readonly rows="9" x-text="wg.conf"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50 focus:outline-none resize-none"></textarea>
+              <div class="flex items-center gap-3">
+                <button type="button" @click="copyText(wg.conf)"
+                        class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" data-i18n="set.copy">Copy</button>
+              </div>
+              <div id="wg-qr" class="mt-2"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Upstream Proxy -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Upstream Proxy</h2>
+            <p class="text-xs text-gray-500 mt-0.5">When set, all regular-mode listeners forward through this parent proxy. Restart the proxy after changing.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1">Upstream Proxy URL</label>
+              <input type="text" x-model="settings.upstream_proxy" placeholder="http://proxy.example:3128"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1">Upstream Auth <span class="text-gray-400">(optional)</span></label>
+              <input type="text" x-model="settings.upstream_auth" placeholder="user:pass"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Management bind -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900" data-i18n="set.mgmtServer">Management Server</h2>
+            <p class="text-xs text-gray-500 mt-0.5" data-i18n="set.mgmtServerDesc">Bind for this admin interface — independent of the proxy listen settings.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.mgmtHost">Management Host</label>
+              <input type="text" x-model="settings.mgmt_host" placeholder="0.0.0.0"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.mgmtPort">Management Port</label>
+              <input type="number" x-model.number="settings.mgmt_port"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <p class="text-xs text-gray-400" data-i18n="set.bindHelp">0.0.0.0 = all IPv4 · 127.0.0.1 = this machine only · :: = all IPv6.</p>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.mgmtHostname">Management pseudo-domain</label>
+            <input type="text" x-model="settings.mgmt_hostname" data-i18n-ph="set.mgmtHostnamePh" placeholder="web.filter"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1" data-i18n="set.mgmtHostnameHelp">Access the management UI through the proxy at this hostname (e.g. http://web.filter). The proxy redirects requests for this hostname to the real management server.</p>
+          </div>
+        </div>
+
+        <!-- Proxy auto-config (PAC / WPAD) -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900" data-i18n="set.pac">Proxy Auto-Config (PAC / WPAD)</h2>
+            <p class="text-xs text-gray-500 mt-0.5" data-i18n="set.pacDesc">Point client devices at one of these URLs (Settings → Automatic proxy configuration), or set wpad via DHCP/DNS for auto-discovery.</p>
+          </div>
+          <div class="space-y-2">
+            <template x-for="path in ['/proxy.pac', '/wpad.dat']" :key="path">
+              <div class="flex items-center gap-2">
+                <input type="text" readonly :value="pacUrl(path)"
+                       class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50 text-gray-700" />
+                <button type="button" @click="copyText(pacUrl(path))"
+                        class="px-3 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium" data-i18n="set.copy">Copy</button>
+              </div>
+            </template>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.advertisedHost">Advertised proxy host</label>
+            <input type="text" x-model="settings.pac_proxy_host" data-i18n-ph="set.advertisedHostPh" placeholder="auto (host clients used to reach this page)"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.directHosts">Direct (non-proxied) hosts</label>
+            <div class="space-y-2">
+              <template x-for="(h, i) in settings.pac_direct_hosts" :key="i">
+                <div class="flex items-center gap-2">
+                  <input type="text" x-model="settings.pac_direct_hosts[i]" data-i18n-ph="set.directHostPh" placeholder="example.com"
+                         class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <button type="button" @click="settings.pac_direct_hosts.splice(i, 1)"
+                          class="px-2 py-2 text-gray-400 hover:text-red-500" title="Remove">✕</button>
+                </div>
+              </template>
+              <button type="button" @click="settings.pac_direct_hosts.push('')"
+                      class="text-sm text-blue-600 hover:text-blue-800 font-medium" data-i18n="set.addDirect">+ Add direct host</button>
+            </div>
+            <p class="text-xs text-gray-400 mt-1" data-i18n="set.directHelp">These bypass the proxy entirely. Subdomains are included automatically. Localhost and private IP ranges are always direct.</p>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.directIps">Direct (non-proxied) IPs / ranges</label>
+            <div class="space-y-2">
+              <template x-for="(ip, i) in settings.pac_direct_ips" :key="i">
+                <div class="flex items-center gap-2">
+                  <input type="text" x-model="settings.pac_direct_ips[i]" data-i18n-ph="set.directIpPh" placeholder="203.0.113.0/24"
+                         class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <button type="button" @click="settings.pac_direct_ips.splice(i, 1)"
+                          class="px-2 py-2 text-gray-400 hover:text-red-500" title="Remove">✕</button>
+                </div>
+              </template>
+              <button type="button" @click="settings.pac_direct_ips.push('')"
+                      class="text-sm text-blue-600 hover:text-blue-800 font-medium" data-i18n="set.addDirectIp">+ Add direct IP / range</button>
+            </div>
+            <p class="text-xs text-gray-400 mt-1" data-i18n="set.directIpHelp">IPv4 addresses and CIDR ranges (e.g. 10.10.0.0/16) bypass the proxy via <code>isInNet</code>. IPv6 addresses use an exact match.</p>
+          </div>
+        </div>
+
+        <!-- Directories & logging -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-5">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.certDir">Certificate Directory</label>
+              <input type="text" x-model="settings.cert_dir"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.policiesDir">Policies Directory</label>
+              <input type="text" x-model="settings.policies_dir"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.logsDir">Logs Directory</label>
+            <input type="text" x-model="settings.logs_dir" placeholder="./logs"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1" data-i18n="set.logsHelp">Holds webfilter.db (SQLite) and any imported legacy JSONL files.</p>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1">Categories Directory</label>
+            <input type="text" x-model="settings.categories_dir" placeholder="./categories"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1">Holds the site-category blocklists used by URL filter policies.</p>
+          </div>
+          <div class="space-y-2 pt-1">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.log_blocks" />
+              <span class="text-sm text-gray-700" data-i18n="set.logBlocks">Log blocked requests to file</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.log_requests" />
+              <span class="text-sm text-gray-700" data-i18n="set.logRequests">Log all requests to file</span>
+            </label>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="set.logRetention">Log retention (days)</label>
+            <input type="number" x-model.number="settings.log_retention_days" min="0" step="1"
+                   class="w-32 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1" data-i18n="set.logRetentionHelp">Rows older than this many days are pruned automatically. Set 0 to keep everything.</p>
+          </div>
+        </div>
+
+        <!-- Management HTTPS -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mt-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Management HTTPS</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Serve this interface over TLS instead of plain HTTP &mdash; including the login request. Restart after saving changes.</p>
+          </div>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.mgmt_tls" />
+            <span class="text-sm text-gray-700">Serve the management interface over HTTPS</span>
+          </label>
+          <div x-show="settings.mgmt_tls" class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+            <p class="text-xs text-amber-800"><span class="font-semibold">Before you enable this without a certificate below:</span> the built-in CA signs the certificate, so browsers warn until that CA is installed &mdash; and the CA download at <span class="font-mono">/api/ca-cert</span> would itself be behind that warning. Install <span class="font-mono">certs/ca.crt</span> on your machine first, or supply a publicly trusted certificate. WPAD clients will also stop fetching <span class="font-mono">/proxy.pac</span> from an endpoint they do not trust, so leave this off if you distribute PAC from this port.</p>
+          </div>
+          <div x-show="settings.mgmt_tls">
+            <label class="text-xs font-medium text-gray-700 block mb-1">Certificate file <span class="text-gray-400">(optional &mdash; leave blank to use the built-in CA)</span></label>
+            <input type="text" x-model="settings.mgmt_cert_file" placeholder="/etc/ssl/certs/webfilter.pem"
+                   autocomplete="off" spellcheck="false"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div x-show="settings.mgmt_tls">
+            <label class="text-xs font-medium text-gray-700 block mb-1">Private key file</label>
+            <input type="text" x-model="settings.mgmt_key_file" placeholder="/etc/ssl/private/webfilter.key"
+                   autocomplete="off" spellcheck="false"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1">Set both or neither. The pair is loaded and checked when you save, so a bad path is reported here rather than taking the interface down on the next restart.</p>
+          </div>
+        </div>
+
+        <!-- Authentication -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mt-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900" data-i18n="set.auth">Authentication</h2>
+            <p class="text-xs text-gray-500 mt-0.5" data-i18n="set.authDesc">Require a password to open this management interface.</p>
+          </div>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.auth_enabled" />
+            <span class="text-sm text-gray-700" data-i18n="set.requirePw">Require password to access management interface</span>
+          </label>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1">
+              <span x-text="settings.has_password ? $t('set.changePw') : $t('set.setPw')"></span>
+              <span x-show="settings.has_password" class="text-green-600" data-i18n="set.pwSet">· a password is currently set</span>
+            </label>
+            <input type="password" x-model="newPassword" autocomplete="new-password"
+                   :placeholder="settings.has_password ? $t('set.pwKeepPh') : $t('set.pwEnterPh')"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1" data-i18n="set.pwHelp">Stored salted + hashed (PBKDF2). Put the UI behind HTTPS/VPN if exposed beyond a trusted network.</p>
+          </div>
+        </div>
+
+        <!-- Proxy Authentication -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mt-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Proxy Authentication</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Require clients to present a username and password before they can use the proxy (HTTP Basic, RFC 7235). Applies to HTTP proxy requests and HTTPS CONNECT tunnels.</p>
+          </div>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.proxy_auth_enabled" />
+            <span class="text-sm text-gray-700">Require credentials to use the proxy</span>
+          </label>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1">Username</label>
+            <input type="text" x-model="settings.proxy_auth_username" placeholder="proxyuser"
+                   autocomplete="off" spellcheck="false"
+                   class="w-full sm:w-64 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700 block mb-1">
+              <span x-text="settings.has_proxy_auth ? 'Change proxy password' : 'Set proxy password'"></span>
+              <span x-show="settings.has_proxy_auth" class="text-green-600"> · a password is currently set</span>
+            </label>
+            <input type="password" x-model="newProxyAuthPassword" autocomplete="new-password"
+                   :placeholder="settings.has_proxy_auth ? 'Leave blank to keep current password' : 'Enter password'"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1">Password is stored salted + hashed (PBKDF2). Credentials travel over the network as Base64 (HTTP Basic) — use on a trusted LAN or behind HTTPS/VPN.</p>
+          </div>
+        </div>
+
+        <!-- Monitoring -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 space-y-4 mt-4">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Monitoring</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Prometheus metrics and a health endpoint for load balancers. <span class="font-mono">/health</span> is always available and needs no authentication &mdash; a load balancer cannot log in.</p>
+          </div>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="settings.metrics_enabled" />
+            <span class="text-sm text-gray-700">Expose Prometheus metrics at <span class="font-mono">/metrics</span></span>
+          </label>
+          <div x-show="settings.metrics_enabled">
+            <label class="text-xs font-medium text-gray-700 block mb-1">Scrape token <span class="text-gray-400">(optional)</span></label>
+            <input type="text" x-model="settings.metrics_token" placeholder="Leave blank to require a login session"
+                   autocomplete="off" spellcheck="false"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-gray-400 mt-1">Only needed when management authentication is on: a Prometheus scraper cannot log in, so it sends this instead as <span class="font-mono">Authorization: Bearer &lt;token&gt;</span>. It grants read access to the counters and nothing else &mdash; it is not a second management password, and it is stored and shown in plain text because it has to be copied into a scrape config.</p>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs">
+            <a :href="pacUrl('/health')" target="_blank" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-mono text-gray-700" x-text="pacUrl('/health')"></a>
+            <a x-show="settings.metrics_enabled" :href="pacUrl('/metrics')" target="_blank" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-mono text-gray-700" x-text="pacUrl('/metrics')"></a>
+          </div>
+          <p class="text-xs text-gray-400">Counters are per-process: if you run <span class="font-mono">webfilter proxy</span> and <span class="font-mono">webfilter mgmt</span> as separate processes, scrape the one serving traffic &mdash; the management process reports zeroes.</p>
+        </div>
+
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 mt-4 space-y-5">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900 mb-1" data-i18n="set.caCert">CA Certificate</h2>
+            <p class="text-sm text-gray-600" data-i18n="set.caCertDesc">Install this certificate on client devices to enable HTTPS inspection.</p>
+          </div>
+          <a href="/api/ca-cert" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sidebar rounded-lg hover:bg-sidebar-active">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span data-i18n="set.downloadCaCert">Download CA Certificate</span>
+          </a>
+
+          <div class="border-t border-gray-100 pt-5">
+            <h3 class="text-sm font-semibold text-gray-900 mb-1" data-i18n="set.caMigrate">Migrate CA to another instance</h3>
+            <p class="text-xs text-gray-500 mb-3" data-i18n="set.caMigrateDesc">Export the CA bundle (certificate + private key) to copy this proxy's identity to a new instance, so client devices only need to trust one CA. Keep this file secret.</p>
+            <div class="flex flex-wrap items-center gap-3">
+              <a href="/api/certs/export" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span data-i18n="set.exportCaBundle">Export CA (with key)</span>
+              </a>
+              <label class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span data-i18n="set.importCa">Import CA…</span>
+                <input type="file" accept=".pem,application/x-pem-file" class="hidden" @change="importCa($event)" />
+              </label>
+            </div>
+            <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-3" data-i18n="set.caImportNote">Importing replaces this instance's CA with the uploaded mitmproxy-ca.pem. Restart the proxy afterwards for it to take effect.</p>
+          </div>
+        </div>
+
+        <!-- Configuration backup / restore -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 p-6 mt-4 space-y-5">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-900">Configuration Backup</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Export all policies and settings as a single ZIP for migration or disaster-recovery. The CA bundle is exported separately above.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="/api/backup"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export configuration
+            </a>
+            <label class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Import configuration…
+              <input type="file" accept=".zip,application/zip" class="hidden" @change="importBackup($event)" />
+            </label>
+          </div>
+          <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">Importing overwrites all current policies and settings with those in the ZIP. Restart the proxy afterwards for settings changes to take full effect.</p>
+        </div>
+
+        <!-- Single save bar — every section above writes the whole settings object -->
+        <div class="sticky bottom-0 -mx-8 mt-6 px-8 py-3 bg-card/95 backdrop-blur border-t border-gray-200">
+          <div x-show="alert" x-cloak class="mb-2 px-3 py-2 rounded-lg text-sm"
+               :class="alertType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'"
+               x-text="alert"></div>
+          <!-- Stays up until the next save: unlike the transient "Saved"
+               toast, this is something the operator still has to act on. -->
+          <div x-show="restartRequired.length" x-cloak
+               class="mb-2 px-3 py-2 rounded-lg text-sm bg-amber-50 text-amber-800 border border-amber-200">
+            <span class="font-medium">Saved, but a restart is needed for:</span>
+            <span class="font-mono" x-text="restartRequired.join(', ')"></span>
+            <span class="text-amber-700">&mdash; everything else is already live.</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <button @click="save()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" data-i18n="set.save">Save Settings</button>
+            <p class="text-xs text-gray-400">Most settings apply immediately. Listen addresses, ports, directories and the capture modes are bound at startup &mdash; saving one of those says so above.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function settingsPage() {
+      return {
+        llmCatalog: [],
+        adblock: {},
+        adblockUpdating: false,
+        settings: { llm: { enabled: true, model: 'gemma-4-e2b', accel: 'auto', threads: 0, parallel_slots: 4, max_image_px: 384, external_url: '', data_dir: '', budget: { image_ms: 1500, text_ms: 2000, host_ms: 500, compile_ms: 60000 } }, proxy_listen: ['0.0.0.0:8080', 'socks5@127.0.0.1:1080'], mgmt_host: '0.0.0.0', mgmt_port: 8000, cert_dir: './certs', policies_dir: './policies', logs_dir: './logs', categories_dir: './categories', log_blocks: true, log_requests: true, log_retention_days: 30, default_policy: null, auth_enabled: false, has_password: false, pac_proxy_host: '', pac_direct_hosts: [], pac_direct_ips: [], mgmt_hostname: 'web.filter', upstream_proxy: '', upstream_auth: '', ui_language: 'en', proxy_auth_enabled: false, proxy_auth_username: '', has_proxy_auth: false },
+        status: { proxy_port: null },
+        newPassword: '',
+        newProxyAuthPassword: '',
+        alert: '',
+        alertType: 'success',
+        restartRequired: [],
+        wg: { enabled: false },
+
+        listenMode(entry) {
+          const head = String(entry || '').split('@')[0].split(':')[0].toLowerCase();
+          const known = ['regular','https','socks4','socks5','tls','icap','icaps'];
+          return known.includes(head) ? head : 'regular';
+        },
+        listenAddr(entry) {
+          const e = String(entry || '');
+          const head = e.split('@')[0].split(':')[0].toLowerCase();
+          const known = ['regular','https','socks4','socks5','tls','icap','icaps'];
+          if (!known.includes(head)) return e;
+          const at = e.indexOf('@');
+          return at >= 0 ? e.slice(at + 1) : '';
+        },
+        serializeListen(mode, addr) {
+          if (mode === 'regular') return addr || '0.0.0.0:8080';
+          if (!addr) return mode;
+          return `${mode}@${addr}`;
+        },
+        defaultPortFor(mode) {
+          return ({ regular: 8080, https: 8443, socks4: 1080, socks5: 1080, tls: 1443, icap: 1344, icaps: 11344 })[mode];
+        },
+        usedPorts(exceptIndex) {
+          const ports = new Set();
+          this.settings.proxy_listen.forEach((e, idx) => {
+            if (idx === exceptIndex) return;
+            const m = this.listenAddr(e).match(/:(\d+)$/);
+            if (m) ports.add(+m[1]);
+          });
+          return ports;
+        },
+        freePort(mode, i) {
+          let p = this.defaultPortFor(mode);
+          if (p === '') return '';
+          const used = this.usedPorts(i);
+          while (used.has(p)) p++;
+          return p;
+        },
+        setListenMode(i, mode) {
+          const port = this.freePort(mode, i);
+          const addr = port === '' ? '' : `0.0.0.0:${port}`;
+          this.settings.proxy_listen[i] = this.serializeListen(mode, addr);
+          this.refreshWireguard();
+        },
+        setListenAddr(i, addr) {
+          this.settings.proxy_listen[i] = this.serializeListen(this.listenMode(this.settings.proxy_listen[i]), addr);
+        },
+
+        async refreshWireguard() {
+          try {
+            const r = await fetch('/api/wireguard');
+            if (r.ok) {
+              this.wg = await r.json();
+              this.$nextTick(() => this.renderQr());
+            } else {
+              this.wg = { enabled: false };
+            }
+          } catch (e) {
+            this.wg = { enabled: false };
+          }
+        },
+
+        renderQr() {
+          const el = document.getElementById('wg-qr');
+          if (!el) return;
+          el.innerHTML = '';
+          if (this.wg.conf && window.QRCode) {
+            new QRCode(el, { text: this.wg.conf, width: 220, height: 220 });
+          }
+        },
+
+        async loadAdblock() {
+          try {
+            const r = await fetch('/api/adblock/status');
+            if (r.ok) this.adblock = await r.json();
+          } catch (e) {}
+        },
+        async updateAdblock() {
+          this.adblockUpdating = true;
+          try {
+            const r = await fetch('/api/adblock/update', { method: 'POST' });
+            const body = await r.json().catch(() => ({}));
+            if (r.ok) { this.adblock = body; this.alert = 'Filter lists updated.'; this.alertType = 'success'; }
+            else { this.alert = body.detail || 'Update failed.'; this.alertType = 'error'; }
+          } catch (e) { this.alert = 'Network error — update failed.'; this.alertType = 'error'; }
+          finally { this.adblockUpdating = false; setTimeout(() => { this.alert = ''; }, 5000); }
+        },
+        async init() {
+          try {
+            const res = await fetch('/api/settings');
+            if (res.ok) {
+              const s = await res.json();
+              if (!Array.isArray(s.proxy_listen) || s.proxy_listen.length === 0) s.proxy_listen = ['0.0.0.0:8080'];
+              if (!Array.isArray(s.pac_direct_hosts)) s.pac_direct_hosts = [];
+              if (!Array.isArray(s.pac_direct_ips)) s.pac_direct_ips = [];
+              if (!s.mgmt_hostname) s.mgmt_hostname = 'web.filter';
+              if (!s.llm) s.llm = this.settings.llm;
+              if (!s.llm.budget) s.llm.budget = this.settings.llm.budget;
+              this.settings = s;
+            }
+          } catch (e) {}
+          await this.loadStatus();
+          await this.refreshWireguard();
+          try {
+            const c = await fetch('/api/llm/catalog');
+            if (c.ok) this.llmCatalog = await c.json();
+          } catch (e) {}
+          await this.loadAdblock();
+        },
+
+        async loadStatus() {
+          try {
+            const r = await fetch('/api/status');
+            if (r.ok) this.status = await r.json();
+          } catch (e) {}
+        },
+
+        pacUrl(path) { return location.origin + path; },
+
+        async copyText(text) {
+          try { await navigator.clipboard.writeText(text); this.alert = window.wfT('set.copied') + text; this.alertType = 'success'; }
+          catch (e) { this.alert = window.wfT('set.copyFailed'); this.alertType = 'error'; }
+          setTimeout(() => { this.alert = ''; }, 3000);
+        },
+
+        async save() {
+          const payload = { ...this.settings };
+          // Interface language is managed by the language picker (and persisted
+          // immediately), so don't let a stale value here overwrite it.
+          delete payload.ui_language;
+          if (Array.isArray(payload.pac_direct_hosts))
+            payload.pac_direct_hosts = payload.pac_direct_hosts.map(h => (h || '').trim()).filter(Boolean);
+          if (Array.isArray(payload.pac_direct_ips))
+            payload.pac_direct_ips = payload.pac_direct_ips.map(h => (h || '').trim()).filter(Boolean);
+          if (this.newPassword) payload.new_password = this.newPassword;
+          if (this.newProxyAuthPassword !== '') payload.new_proxy_auth_password = this.newProxyAuthPassword;
+          try {
+            const res = await fetch('/api/settings', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            const body = await res.json().catch(() => ({}));
+            if (res.ok) {
+              // restart_required is response metadata, not a setting: keep it
+              // out of the form model or the next save would echo it back.
+              const { restart_required: pending, ...saved } = body;
+              this.settings = saved;
+              this.restartRequired = Array.isArray(pending) ? pending : [];
+              this.newPassword = '';
+              this.newProxyAuthPassword = '';
+              this.alert = window.wfT('set.saved');
+              this.alertType = 'success';
+            } else {
+              this.alert = body.detail || window.wfT('set.saveFailed');
+              this.alertType = 'error';
+            }
+          } catch (e) {
+            this.alert = window.wfT('set.netErr');
+            this.alertType = 'error';
+          }
+          setTimeout(() => { this.alert = ''; }, 4000);
+        },
+
+        async importCa(event) {
+          const file = event.target.files && event.target.files[0];
+          event.target.value = '';  // allow re-selecting the same file later
+          if (!file) return;
+          const fd = new FormData();
+          fd.append('file', file);
+          try {
+            const res = await fetch('/api/certs/import', { method: 'POST', body: fd });
+            const body = await res.json().catch(() => ({}));
+            if (res.ok) {
+              this.alert = window.wfT('set.caImported');
+              this.alertType = 'success';
+            } else {
+              this.alert = body.detail || window.wfT('set.caImportFailed');
+              this.alertType = 'error';
+            }
+          } catch (e) {
+            this.alert = window.wfT('set.netErr');
+            this.alertType = 'error';
+          }
+          setTimeout(() => { this.alert = ''; }, 5000);
+        },
+
+        async importBackup(event) {
+          const file = event.target.files && event.target.files[0];
+          event.target.value = '';
+          if (!file) return;
+          const fd = new FormData();
+          fd.append('file', file);
+          try {
+            const res = await fetch('/api/backup', { method: 'POST', body: fd });
+            const body = await res.json().catch(() => ({}));
+            if (res.ok) {
+              const n = (body.restored_policies || []).length;
+              this.alert = `Restored: ${n} ${n === 1 ? 'policy' : 'policies'}${body.restored_settings ? ' + settings' : ''}.`;
+              this.alertType = 'success';
+            } else {
+              this.alert = body.detail || 'Import failed.';
+              this.alertType = 'error';
+            }
+          } catch (e) {
+            this.alert = 'Network error — import failed.';
+            this.alertType = 'error';
+          }
+          setTimeout(() => { this.alert = ''; }, 5000);
+        },
+
+
+        async logout() { await fetch('/api/logout', { method: 'POST' }); location.href = 'login.html'; },
+      };
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Keep the build context to the Go source the image actually needs.
+# Everything the build touches is `go build ./cmd/webfilter` plus the
+# //go:embed assets under internal/ and ui/, so the heavy, host-specific and
+# runtime-state parts of the tree are excluded.
+
+.git
+.github
+.gitignore
+
+# Runtime state (never bake a host's CA, logs or policies into an image).
+config/settings.json
+certs/
+logs/
+policies/*.json
+!policies/*.json.example
+categories/
+data/
+bin/
+
+# Build outputs.
+dist/
+webfilter
+webfilter.exe
+*.exe
+*.dll
+*.so
+*.test
+
+# Android/desktop-GUI side trees: the AAR is built by gomobile, not here, and
+# the Gradle/IDE caches are large.
+android/
+third_party/
+vendor/
+
+# Docs and packaging - not inputs to `go build`.
+*.md
+docs/
+packaging/
+scripts/
+Dockerfile
+docker-compose.yml
+.dockerignore

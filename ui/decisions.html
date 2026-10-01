@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.decisions">Decisions — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="decisionsPage()" x-init="init()">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.rules">Rules</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-sidebar-border">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">Decisions</h1>
+          <p class="text-sm text-gray-500 mt-1">Every verdict the model (or you) has made, cached so the same content is never judged twice. Override anything that is wrong.</p>
+        </div>
+
+        <div x-show="alert" x-cloak class="mb-4 rounded-lg px-4 py-2 text-sm"
+             :class="alertType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'" x-text="alert"></div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 text-sm">
+          <template x-for="tile in tiles()" :key="tile.label">
+            <div class="bg-card rounded-xl shadow-sm border border-gray-100 px-4 py-3">
+              <div class="text-xs text-gray-500" x-text="tile.label"></div>
+              <div class="text-xl font-semibold text-gray-900" x-text="tile.value"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Manual override -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold text-gray-900">Add an override</h2>
+            <p class="text-xs text-gray-400 mt-0.5">A site override applies to every page and image on that registrable domain (e.g. <span class="font-mono">example.com</span>); a host override marks an ad/tracker host.</p>
+          </div>
+          <div class="px-6 py-4 flex flex-wrap gap-3 items-end">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Kind</label>
+              <select x-model="ov.kind" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                <option value="site">site (domain)</option>
+                <option value="host">host (ad/tracker)</option>
+              </select>
+            </div>
+            <div class="flex-1 min-w-48">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Domain / host</label>
+              <input type="text" x-model="ov.key" placeholder="example.com" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Verdict</label>
+              <select x-model="ov.adult" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                <option value="true">adult / block</option>
+                <option value="false">clean / allow</option>
+              </select>
+            </div>
+            <div class="flex-1 min-w-40">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Note</label>
+              <input type="text" x-model="ov.note" placeholder="why" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+            </div>
+            <button @click="override()" class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save override</button>
+          </div>
+        </div>
+
+        <!-- List -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+          <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3">
+            <select x-model="filter.kind" @change="load()" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+              <option value="">All kinds</option>
+              <option value="image">Images</option>
+              <option value="text">Pages</option>
+              <option value="site">Sites</option>
+              <option value="host">Hosts</option>
+            </select>
+            <input type="text" x-model="filter.q" @keyup.enter="load()" placeholder="Search URL, host or detail…" class="flex-1 min-w-48 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+            <button @click="load()" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50">Search</button>
+            <button @click="clearCache()" class="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">Clear model verdicts</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 text-xs text-gray-500">
+                <tr>
+                  <th class="text-left px-6 py-2 font-medium">When</th>
+                  <th class="text-left px-3 py-2 font-medium">Kind</th>
+                  <th class="text-left px-3 py-2 font-medium">Verdict</th>
+                  <th class="text-left px-3 py-2 font-medium">Seen at / key</th>
+                  <th class="text-left px-3 py-2 font-medium">Detail</th>
+                  <th class="text-left px-3 py-2 font-medium">Source</th>
+                  <th class="text-right px-3 py-2 font-medium">Hits</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <template x-for="d in rows" :key="d.kind + ':' + d.key">
+                  <tr>
+                    <td class="px-6 py-2 whitespace-nowrap text-gray-500" x-text="fmtTime(d.created)"></td>
+                    <td class="px-3 py-2" x-text="d.kind"></td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="badge text-xs px-2 py-0.5 rounded-full" :class="d.adult ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                            x-text="(d.adult ? 'adult' : 'clean') + ' · ' + (d.score || 0).toFixed(2)"></span>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs truncate font-mono text-xs" :title="d.hint || d.key" x-text="d.hint || d.key"></td>
+                    <td class="px-3 py-2 max-w-sm truncate text-gray-600" :title="d.detail" x-text="d.detail"></td>
+                    <td class="px-3 py-2" x-text="d.source"></td>
+                    <td class="px-3 py-2 text-right" x-text="d.hits"></td>
+                    <td class="px-3 py-2 text-right whitespace-nowrap">
+                      <button @click="flip(d)" class="px-2 py-1 text-xs font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50" x-text="d.adult ? 'Mark clean' : 'Mark adult'"></button>
+                      <button @click="del(d)" class="px-2 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">Forget</button>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="rows.length === 0"><td colspan="8" class="px-6 py-6 text-center text-gray-400 text-sm">No decisions yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function decisionsPage() {
+      return {
+        rows: [],
+        stats: null,
+        filter: { kind: '', q: '' },
+        ov: { kind: 'site', key: '', adult: 'true', note: '' },
+        alert: '', alertType: 'success',
+        async init() { await this.load(); },
+        tiles() {
+          const s = this.stats || { total: 0, by_kind: {}, adult: 0, manual: 0, sites: 0 };
+          const k = s.by_kind || {};
+          return [
+            { label: 'Cached verdicts', value: s.total || 0 },
+            { label: 'Images', value: k.image || 0 },
+            { label: 'Pages', value: k.text || 0 },
+            { label: 'Adult', value: s.adult || 0 },
+            { label: 'Manual overrides', value: s.manual || 0 },
+          ];
+        },
+        fmtTime(t) { try { return new Date(t).toLocaleString(); } catch (e) { return t; } },
+        flash(msg, type) { this.alert = msg; this.alertType = type || 'success'; setTimeout(() => { this.alert = ''; }, 5000); },
+        async load() {
+          try {
+            const q = new URLSearchParams({ kind: this.filter.kind, q: this.filter.q, limit: '200' });
+            const r = await fetch('/api/decisions?' + q.toString());
+            if (r.ok) this.rows = await r.json();
+            else { const b = await r.json().catch(() => ({})); this.flash(b.detail || 'Could not load decisions.', 'error'); }
+            const s = await fetch('/api/decisions/stats');
+            if (s.ok) this.stats = await s.json();
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+        },
+        async post(url, body) {
+          const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const b = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(b.detail || 'Request failed');
+          return b;
+        },
+        async override() {
+          if (!this.ov.key.trim()) { this.flash('Enter a domain or host.', 'error'); return; }
+          try {
+            await this.post('/api/decisions/override', { kind: this.ov.kind, key: this.ov.key.trim().toLowerCase(), adult: this.ov.adult === 'true', note: this.ov.note });
+            this.flash('Override saved.'); this.ov.key = ''; this.ov.note = '';
+            await this.load();
+          } catch (e) { this.flash(e.message, 'error'); }
+        },
+        async flip(d) {
+          try {
+            await this.post('/api/decisions/override', { kind: d.kind, key: d.key, adult: !d.adult, note: 'flipped from ' + d.source });
+            await this.load();
+          } catch (e) { this.flash(e.message, 'error'); }
+        },
+        async del(d) {
+          try {
+            const r = await fetch('/api/decisions/' + encodeURIComponent(d.kind) + '/' + encodeURIComponent(d.key), { method: 'DELETE' });
+            if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.detail || 'Delete failed'); }
+            await this.load();
+          } catch (e) { this.flash(e.message, 'error'); }
+        },
+        async clearCache() {
+          if (!confirm('Forget every model verdict? Manual overrides are kept. Content will be re-judged on next sight.')) return;
+          try { await this.post('/api/decisions/clear', { kind: this.filter.kind, include_manual: false }); this.flash('Cleared.'); await this.load(); }
+          catch (e) { this.flash(e.message, 'error'); }
+        },
+      };
+    }
+  </script>
+</body>
+</html>

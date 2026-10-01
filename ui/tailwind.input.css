@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  [x-cloak] { display: none !important; }
+}
+
+@layer components {
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .bar-track {
+    @apply h-2 bg-gray-100 rounded-full overflow-hidden;
+  }
+  .bar-fill {
+    @apply h-full rounded-full transition-all duration-300;
+  }
+  .section {
+    @apply bg-card rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden;
+  }
+  .section-header {
+    @apply flex items-center justify-between px-6 py-4 cursor-pointer select-none;
+  }
+  .tag {
+    @apply inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md;
+  }
+}

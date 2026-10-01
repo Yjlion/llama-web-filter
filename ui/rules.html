@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.rules">Rules — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="rulesPage()" x-init="init()">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.rules">Rules</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-sidebar-border">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">Rules</h1>
+          <p class="text-sm text-gray-500 mt-1">Describe what you want in a sentence. The local model turns it into a rule, you confirm what it understood, and it is applied on top of each device's policy.</p>
+        </div>
+
+        <div x-show="alert" x-cloak class="mb-4 rounded-lg px-4 py-2 text-sm"
+             :class="alertType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'" x-text="alert"></div>
+
+        <!-- Compose -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-semibold text-gray-900">New rule</h2>
+              <p class="text-xs text-gray-400 mt-0.5">
+                Examples: <button class="text-blue-600 hover:underline" @click="text = 'Blur all adult images for ip address 10.10.10.10 from 10am to 5pm'">Blur all adult images for ip address 10.10.10.10 from 10am to 5pm</button> ·
+                <button class="text-blue-600 hover:underline" @click="text = 'Block ads on lan, except site www.cnn.com'">Block ads on lan, except site www.cnn.com</button>
+              </p>
+            </div>
+            <span class="badge text-xs px-2 py-0.5 rounded-full" :class="doc.llm_ready ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'" x-text="doc.llm_ready ? 'model ready' : 'model not ready: simple parser'"></span>
+          </div>
+          <div class="px-6 py-4 space-y-3">
+            <div class="flex gap-3">
+              <input type="text" x-model="text" @keyup.enter="compile()" placeholder="e.g. Block the internet for the kids tablet after 9pm on school nights"
+                     class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button @click="compile()" :disabled="compiling || !text.trim()"
+                      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
+                <span x-show="!compiling">Understand</span><span x-show="compiling">Thinking…</span>
+              </button>
+            </div>
+            <div x-show="compiled" x-cloak class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 space-y-2">
+              <div class="text-sm font-medium text-gray-900" x-text="compiled && compiled.summary"></div>
+              <template x-for="w in (compiled ? compiled.warnings || [] : [])" :key="w">
+                <div class="text-xs text-yellow-800 bg-yellow-50 border border-yellow-200 rounded px-2 py-1" x-text="w"></div>
+              </template>
+              <details class="text-xs text-gray-500">
+                <summary class="cursor-pointer">Rule details (editable JSON)</summary>
+                <textarea x-model="compiledJSON" rows="10" class="mt-2 w-full border border-gray-200 rounded-lg px-3 py-2 font-mono text-xs"></textarea>
+              </details>
+              <div class="flex gap-2">
+                <button @click="save()" class="px-4 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Looks right, save it</button>
+                <button @click="compiled = null" class="px-4 py-1.5 text-sm font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50">Discard</button>
+                <span class="text-xs text-gray-400 self-center" x-text="compiled ? 'understood by: ' + compiled.source : ''"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rules list -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold text-gray-900">Active rules</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Applied in order; a later rule overrides an earlier one for the same thing. Rules apply on top of the device's policy.</p>
+          </div>
+          <div class="divide-y divide-gray-100">
+            <template x-for="r in doc.rules" :key="r.id">
+              <div class="px-6 py-3 flex items-start gap-4">
+                <label class="mt-1"><input type="checkbox" class="w-4 h-4 accent-blue-600" :checked="r.enabled" @change="toggle(r, $event.target.checked)" /></label>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-gray-900" :class="r.enabled ? '' : 'line-through text-gray-400'" x-text="r.summary"></div>
+                  <div class="text-xs text-gray-400 mt-0.5 truncate" x-text="r.text ? '“' + r.text + '”' : ''"></div>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <span class="badge text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600" x-text="r.target"></span>
+                    <span class="badge text-xs px-2 py-0.5 rounded-full" :class="r.action === 'allow' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" x-text="r.action"></span>
+                    <template x-for="s in (r.match.sources || [])" :key="s"><span class="badge text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" x-text="s"></span></template>
+                    <span x-show="r.match.time" class="badge text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700" x-text="r.match.time ? r.match.time.start + '–' + r.match.time.end + ((r.match.time.days||[]).length ? ' ' + r.match.time.days.join(',') : '') : ''"></span>
+                  </div>
+                </div>
+                <button @click="remove(r)" class="px-2 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">Delete</button>
+              </div>
+            </template>
+            <div x-show="!doc.rules || doc.rules.length === 0" class="px-6 py-6 text-center text-sm text-gray-400">No rules yet. Type a sentence above.</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Devices -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900">Device names</h2>
+              <p class="text-xs text-gray-400 mt-0.5">Give devices names so sentences can say “for the kids tablet”. One per line: <span class="font-mono">name = 10.0.0.7, aa:bb:cc:dd:ee:ff</span></p>
+            </div>
+            <div class="px-6 py-4 space-y-2">
+              <textarea x-model="devicesText" rows="5" class="w-full border border-gray-200 rounded-lg px-3 py-2 font-mono text-xs" placeholder="kids-tablet = 10.0.0.7&#10;living-room-tv = aa:bb:cc:dd:ee:ff"></textarea>
+              <button @click="saveDevices()" class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save devices</button>
+            </div>
+          </div>
+          <!-- Tester -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900">What applies right now?</h2>
+              <p class="text-xs text-gray-400 mt-0.5">Check which rules are in force for a client and site at this moment.</p>
+            </div>
+            <div class="px-6 py-4 space-y-3">
+              <div class="flex gap-2">
+                <input type="text" x-model="test.ip" placeholder="10.10.10.10" class="w-40 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                <input type="text" x-model="test.url" placeholder="https://www.cnn.com/" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                <button @click="evaluate()" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50">Check</button>
+              </div>
+              <div x-show="test.result" x-cloak class="text-sm space-y-1">
+                <div class="text-xs text-gray-500">Policy: <span class="font-mono" x-text="test.result && (test.result.policy || '(none)')"></span></div>
+                <template x-for="r in (test.result ? test.result.applied : [])" :key="r.id"><div class="text-gray-800">• <span x-text="r.summary"></span></div></template>
+                <div x-show="test.result && test.result.applied.length === 0" class="text-gray-400">No rules apply.</div>
+                <div class="text-xs text-gray-500 mt-2" x-text="test.result ? effectiveLine(test.result.effective) : ''"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function rulesPage() {
+      return {
+        doc: { rules: [], devices: {}, llm_ready: false },
+        text: '', compiling: false, compiled: null, compiledJSON: '',
+        devicesText: '',
+        test: { ip: '', url: '', result: null },
+        alert: '', alertType: 'success',
+        async init() { await this.load(); },
+        flash(msg, type) { this.alert = msg; this.alertType = type || 'success'; setTimeout(() => { this.alert = ''; }, 6000); },
+        async load() {
+          try {
+            const r = await fetch('/api/rules');
+            if (r.ok) {
+              this.doc = await r.json();
+              this.devicesText = Object.entries(this.doc.devices || {}).map(([k, v]) => k + ' = ' + (v || []).join(', ')).join('\n');
+            }
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+        },
+        async compile() {
+          if (!this.text.trim()) return;
+          this.compiling = true; this.compiled = null;
+          try {
+            const r = await fetch('/api/rules/compile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: this.text }) });
+            const b = await r.json().catch(() => ({}));
+            if (!r.ok) { this.flash(b.detail || 'Could not understand that sentence.', 'error'); return; }
+            this.compiled = b;
+            this.compiledJSON = JSON.stringify(b.rule, null, 2);
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+          finally { this.compiling = false; }
+        },
+        async save() {
+          let rule;
+          try { rule = JSON.parse(this.compiledJSON); } catch (e) { this.flash('The rule JSON is not valid.', 'error'); return; }
+          try {
+            const r = await fetch('/api/rules', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rule) });
+            const b = await r.json().catch(() => ({}));
+            if (!r.ok) { this.flash(b.detail || 'Save failed.', 'error'); return; }
+            this.flash('Saved: ' + b.summary);
+            this.compiled = null; this.text = '';
+            await this.load();
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+        },
+        async toggle(r, enabled) {
+          try {
+            const res = await fetch('/api/rules/' + encodeURIComponent(r.id) + '/enable', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled }) });
+            if (!res.ok) { const b = await res.json().catch(() => ({})); this.flash(b.detail || 'Update failed.', 'error'); }
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+          await this.load();
+        },
+        async remove(r) {
+          if (!confirm('Delete this rule?\n\n' + r.summary)) return;
+          try {
+            const res = await fetch('/api/rules/' + encodeURIComponent(r.id), { method: 'DELETE' });
+            if (!res.ok) { const b = await res.json().catch(() => ({})); this.flash(b.detail || 'Delete failed.', 'error'); }
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+          await this.load();
+        },
+        async saveDevices() {
+          const devices = {};
+          for (const line of this.devicesText.split('\n')) {
+            const [name, members] = line.split('=');
+            if (!name || !members) continue;
+            devices[name.trim().toLowerCase()] = members.split(',').map(s => s.trim()).filter(Boolean);
+          }
+          try {
+            const r = await fetch('/api/rules/devices', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ devices }) });
+            const b = await r.json().catch(() => ({}));
+            if (!r.ok) { this.flash(b.detail || 'Save failed.', 'error'); return; }
+            this.flash('Devices saved.');
+            await this.load();
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+        },
+        async evaluate() {
+          if (!this.test.ip.trim()) { this.flash('Enter a client IP.', 'error'); return; }
+          try {
+            const q = new URLSearchParams({ client_ip: this.test.ip.trim(), url: this.test.url.trim() });
+            const r = await fetch('/api/rules/evaluate?' + q.toString());
+            const b = await r.json().catch(() => ({}));
+            if (!r.ok) { this.flash(b.detail || 'Check failed.', 'error'); return; }
+            this.test.result = b;
+          } catch (e) { this.flash('Network error: ' + e.message, 'error'); }
+        },
+        effectiveLine(e) {
+          if (!e) return '';
+          const parts = [];
+          parts.push('adult images: ' + (e.adult_images.enabled ? e.adult_images.action : 'off'));
+          parts.push('adult pages: ' + (e.adult_text ? 'block' : 'off'));
+          parts.push('ads: ' + (e.ads ? 'block' : 'allow'));
+          parts.push('safesearch: ' + (e.safesearch ? 'on' : 'off'));
+          if (e.url_filter.enabled) parts.push('url filter: block ' + (e.url_filter.block || []).join(', ') + (e.url_filter.categories.length ? ' + categories ' + e.url_filter.categories.join(', ') : ''));
+          return 'Effective: ' + parts.join(' · ');
+        },
+      };
+    }
+  </script>
+</body>
+</html>

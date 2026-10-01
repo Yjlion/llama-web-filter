@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.editor">Policy Editor — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+  <style>
+    .toggle { appearance: none; width: 36px; height: 20px; background: #d1d5db; border-radius: 10px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .toggle:checked { background: #2563eb; }
+    .toggle::after { content:''; position:absolute; left:2px; top:2px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform .2s; }
+    .toggle:checked::after { transform: translateX(16px); }
+  </style>
+</head>
+<body class="bg-canvas min-h-screen" x-data="editor()" x-init="init()">
+
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.rules">Rules</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+      <div class="px-3 py-4 border-t border-sidebar-border">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6 max-w-3xl mx-auto">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900" x-text="$t(isNew ? 'ed.newPolicy' : 'ed.editPolicy')"></h1>
+            <p class="text-sm text-gray-500 mt-1" data-i18n="ed.subtitle">Configure filtering rules for a set of IP addresses</p>
+          </div>
+          <div class="flex gap-3">
+            <a href="index.html" class="px-4 py-2 text-sm font-medium text-gray-600 bg-card border border-gray-200 rounded-lg hover:bg-gray-50" data-i18n="common.cancel">Cancel</a>
+            <button @click="save()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" data-i18n="ed.savePolicy">Save Policy</button>
+          </div>
+        </div>
+
+        <!-- Alert -->
+        <div x-show="alert" x-cloak class="mb-4 px-4 py-3 rounded-lg text-sm"
+             :class="alertType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'"
+             x-text="alert"></div>
+
+        <!-- Basic info -->
+        <div class="section">
+          <div class="px-6 py-4">
+            <h2 class="text-sm font-semibold text-gray-900 mb-4" data-i18n="ed.basicInfo">Basic Information</h2>
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="ed.policyName">Policy Name</label>
+                <input x-model="policy.name" type="text" data-i18n-ph="ed.policyNamePh" placeholder="e.g. kids, office, guest"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="checkbox" class="toggle" x-model="policy.inactive" />
+                <div>
+                  <div class="text-xs font-medium text-gray-700" data-i18n="ed.inactive">Inactive</div>
+                  <div class="text-xs text-gray-400" data-i18n="ed.inactiveDesc">Disable this policy without deleting it — it will never match any client.</div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1" data-i18n="ed.sourceIps">Source IP Addresses / CIDR Ranges</label>
+                <div @click="$refs.ipField.focus()" class="border border-gray-200 rounded-lg px-3 py-2 min-h-10 flex flex-wrap gap-1 items-center focus-within:ring-2 focus-within:ring-blue-500 cursor-text">
+                  <template x-for="(ip, i) in policy.source_ips" :key="i">
+                    <span class="tag">
+                      <span x-text="ip"></span>
+                      <button type="button" @click.stop="removeIp(i)" class="text-gray-400 hover:text-red-500">×</button>
+                    </span>
+                  </template>
+                  <input x-ref="ipField" x-model="ipInput" @keydown.enter.prevent="addIp()" @keydown.comma.prevent="addIp()"
+                         @blur="addIp()" data-i18n-ph="ed.ipFieldPh" placeholder="192.168.1.0/24, 10.0.0.5, 2001:db8::/32, ::1 — press Enter"
+                         class="flex-1 min-w-48 text-sm outline-none bg-transparent" />
+                </div>
+                <p class="text-xs text-gray-400 mt-1" data-i18n="ed.ipHelp">
+                  IPv4 and IPv6 supported. Examples: 192.168.1.0/24, 10.0.0.5, 2001:db8::/32, fe80::1. Leave empty to match all clients (catch-all policy).
+                </p>
+                <p x-show="ipError" x-cloak class="text-xs text-red-500 mt-1" x-text="ipError"></p>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-medium text-gray-700" data-i18n="ed.sourceMacs">Source MAC Addresses</label>
+                  <button type="button" @click="scanNetwork()" :disabled="macScanning"
+                          class="text-xs text-blue-600 hover:text-blue-700 disabled:text-gray-400 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" :class="macScanning ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span data-i18n="ed.scanNetwork">Scan network</span>
+                  </button>
+                </div>
+                <div @click="$refs.macField.focus()" class="border border-gray-200 rounded-lg px-3 py-2 min-h-10 flex flex-wrap gap-1 items-center focus-within:ring-2 focus-within:ring-blue-500 cursor-text">
+                  <template x-for="(mac, i) in policy.source_macs" :key="i">
+                    <span class="tag">
+                      <span x-text="mac"></span>
+                      <button type="button" @click.stop="removeMac(i)" class="text-gray-400 hover:text-red-500">×</button>
+                    </span>
+                  </template>
+                  <input x-ref="macField" x-model="macInput" @keydown.enter.prevent="addMac()" @keydown.comma.prevent="addMac()"
+                         @blur="addMac()" data-i18n-ph="ed.macFieldPh" placeholder="aa:bb:cc:dd:ee:ff — press Enter"
+                         class="flex-1 min-w-48 text-sm outline-none bg-transparent" />
+                </div>
+                <!-- Scan results picker -->
+                <div x-show="macNeighbors.length" x-cloak class="mt-2 border border-gray-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-100">
+                  <template x-for="n in macNeighbors" :key="n.mac">
+                    <button type="button" @click="pickNeighbor(n.mac)"
+                            class="w-full text-left px-3 py-1.5 text-xs hover:bg-blue-50 flex items-center justify-between gap-2"
+                            :class="policy.source_macs.includes(n.mac) ? 'text-gray-400' : 'text-gray-700'">
+                      <span class="font-mono" x-text="n.mac"></span>
+                      <span class="text-gray-400 flex items-center gap-1">
+                        <span x-text="n.ip + (n.iface ? ' (' + n.iface + ')' : '')"></span>
+                        <span x-show="n.vendor" x-text="'· ' + n.vendor" class="text-gray-400 italic"></span>
+                      </span>
+                    </button>
+                  </template>
+                </div>
+                <p x-show="macScanError" x-cloak class="text-xs text-red-500 mt-1" x-text="macScanError"></p>
+                <p class="text-xs text-gray-400 mt-1" data-i18n="ed.macSameSegmentNote">
+                  Matched ahead of IP rules, so a policy follows a device across IP changes. Only devices on the same network segment as the proxy can be matched by MAC.
+                </p>
+                <p x-show="macError" x-cloak class="text-xs text-red-500 mt-1" x-text="macError"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="section">
+          <div class="section-header" @click="open.schedule = !open.schedule">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.schedule.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.schedule">Schedule</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.scheduleDesc">Only apply this policy during specific times — otherwise it applies all the time</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.schedule ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.schedule" class="px-6 pb-5 border-t border-gray-100 pt-4">
+            <div x-show="policy.schedule.active_windows.length === 0" class="text-xs text-gray-400 mb-3" data-i18n="ed.scheduleNoWindows">No time windows yet — this schedule will never be active.</div>
+            <div class="space-y-3">
+              <template x-for="(w, wi) in policy.schedule.active_windows" :key="wi">
+                <div class="border border-gray-200 rounded-lg p-3">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-medium text-gray-700" data-i18n="ed.scheduleDays">Days</label>
+                    <button type="button" @click="policy.schedule.active_windows.splice(wi, 1)" class="text-gray-400 hover:text-red-500">×</button>
+                  </div>
+                  <div class="flex flex-wrap gap-3 mb-3">
+                    <template x-for="d in [0,1,2,3,4,5,6]" :key="d">
+                      <label class="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                        <input type="checkbox" class="w-4 h-4 accent-blue-600" :value="d" x-model="w.days" />
+                        <span x-text="$t('ed.scheduleDay' + d)"></span>
+                      </label>
+                    </template>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.scheduleStart">Start</label>
+                      <input type="time" x-model="w.start" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.scheduleEnd">End</label>
+                      <input type="time" x-model="w.end" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <button type="button" @click="policy.schedule.active_windows.push({ days: [0,1,2,3,4,5,6], start: '00:00', end: '23:59' })"
+                    class="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium" data-i18n="ed.scheduleAddWindow">Add time window</button>
+          </div>
+        </div>
+
+        <!-- URL Filter -->
+        <div class="section">
+          <div class="section-header" @click="open.url = !open.url">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.url_filter.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.urlFilter">URL Filter</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.urlFilterDesc">Block or allow specific URLs and domains</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.url ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.url" class="px-6 pb-5 border-t border-gray-100 pt-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.allowList">Allow List</span> <span class="text-gray-400" data-i18n="ed.allowListNote">(checked first, bypasses all other filters)</span></label>
+                <textarea x-model="allowText" @input="policy.url_filter.allow = allowText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="5" placeholder="allowed.com&#10;*.trusted.org&#10;example.com/safe-path"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path (e.g. example.com/path)</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.blockList">Block List</label>
+                <textarea x-model="blockText" @input="policy.url_filter.block = blockText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="5" placeholder="bad-site.com&#10;*.gambling.net&#10;example.com/bad-path"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path (e.g. example.com/path)</p>
+              </div>
+            </div>
+            <div class="mt-4 border-t border-gray-100 pt-3">
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-medium text-gray-700"><span data-i18n="ed.categories">Categories</span> <span class="text-gray-400" data-i18n="ed.categoriesNote">(the allow / block lists above take precedence)</span></label>
+                <div class="flex gap-3">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" x-model="policy.url_filter.mode" value="blacklist" class="text-blue-600" />
+                    <span class="text-xs text-gray-700" data-i18n="ed.blacklistBlock">Blacklist (block these)</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" x-model="policy.url_filter.mode" value="whitelist" class="text-blue-600" />
+                    <span class="text-xs text-gray-700" data-i18n="ed.whitelistAllow">Whitelist (allow only these)</span>
+                  </label>
+                </div>
+              </div>
+              <p class="text-xs text-gray-400 mb-2" x-text="policy.url_filter.mode === 'whitelist' ? $t('ed.catWhitelistHelp') : $t('ed.catBlacklistHelp')"></p>
+              <div x-show="categories.length===0" class="text-xs text-gray-400" data-i18n="ed.noCategories">No categories installed yet. Run <span class="font-mono">scripts/update_categories.sh</span> on the server.</div>
+              <div class="grid grid-cols-3 gap-x-4 gap-y-1">
+                <template x-for="c in categories" :key="c.name">
+                  <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 accent-blue-600" :value="c.name" x-model="policy.url_filter.categories" />
+                    <span x-text="c.name"></span>
+                    <span class="text-xs text-gray-400" x-text="'(' + (c.count||0).toLocaleString() + ')'"></span>
+                  </label>
+                </template>
+              </div>
+            </div>
+            <div class="mt-4 border-t border-gray-100 pt-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.url_filter.block_quic" />
+                <span class="text-xs font-medium text-gray-700" data-i18n="ed.blockQuic">Discourage HTTP/3 (QUIC)</span>
+              </label>
+              <p class="text-xs text-gray-400 mt-1" data-i18n="ed.blockQuicHelp">Strips the Alt-Svc header so browsers stay on TCP/TLS, where this proxy can inspect them. It cannot block UDP/443 itself on the plain-proxy path; TUN capture always drops QUIC regardless of this setting.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DOH -->
+        <div class="section">
+          <div class="section-header" @click="open.doh = !open.doh">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.doh.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.doh">DNS over HTTPS (DOH)</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.dohDesc">Block domains via a DOH resolver (e.g. family/malware filters)</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.doh ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.doh" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.dohServer">DOH Server</label>
+              <select :value="dohSelectValue()" @change="dohSelectChange($event.target.value)"
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-card">
+                <template x-for="p in dohPresets" :key="p.url">
+                  <option :value="p.url" x-text="p.label"></option>
+                </template>
+                <option value="__custom__" data-i18n="ed.dohCustom">Custom…</option>
+              </select>
+              <input x-show="dohSelectValue() === '__custom__'" type="text" x-model="policy.doh.server"
+                     data-i18n-ph="ed.dohServerPh" placeholder="https://your-doh-server/dns-query"
+                     class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p class="text-xs text-gray-400 mt-1" data-i18n="ed.dohHelp">Pick a preset or type any standard DoH endpoint (RFC 8484), e.g. NextDNS <span class="font-mono">https://dns.nextdns.io/&lt;your-id&gt;</span>. A domain is blocked when the resolver returns NXDOMAIN or sinkholes it (0.0.0.0 / ::).</p>
+              <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-2" data-i18n="ed.dohFirewallNote">Note: DoH queries leave the proxy as outbound HTTPS to the resolver. A restrictive network firewall may block or intercept them — if DoH filtering seems inactive, confirm the proxy host can reach the resolver on port 443.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
+                <textarea x-model="dohExcludeText" @input="policy.doh.exclude = dohExcludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="school.edu&#10;work-intranet.local"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domains only (subdomains included)</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.onlyApplyTo">Only Apply To</span> <span class="text-gray-400" data-i18n="ed.leaveBlankAll">(leave blank for all)</span></label>
+                <textarea x-model="dohIncludeText" @input="policy.doh.include_only = dohIncludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="specific-domain.com"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domains only (subdomains included)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SafeSearch -->
+        <div class="section">
+          <div class="section-header" @click="open.safe = !open.safe">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.safesearch.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.safesearch">SafeSearch</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.safesearchDesc">Enforce safe search on Google, Bing, DuckDuckGo, Yahoo, Brave, Yandex, YouTube</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.safe ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.safe" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <p class="text-xs text-gray-500" data-i18n="ed.safesearchTabsNote">Toggle SafeSearch per engine, and optionally block specific search tabs:</p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs font-medium text-gray-500">
+                    <th class="py-2 pr-4" data-i18n="ed.ssEngine">Engine</th>
+                    <th class="py-2 px-3 text-center" data-i18n="ed.ssOn">On</th>
+                    <th class="py-2 px-3 text-center" data-i18n="ed.ssImages">Images</th>
+                    <th class="py-2 px-3 text-center" data-i18n="ed.ssVideos">Videos</th>
+                    <th class="py-2 px-3 text-center" data-i18n="ed.ssAi">AI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="eng in safeEngines" :key="eng.id">
+                    <tr class="border-t border-gray-50">
+                      <td class="py-2 pr-4 font-medium text-gray-700">
+                        <span class="inline-flex items-center gap-2">
+                          <span class="shrink-0 leading-none" x-html="eng.icon"></span>
+                          <span x-text="eng.label"></span>
+                        </span>
+                      </td>
+                      <td class="py-2 px-3 text-center">
+                        <input type="checkbox" class="toggle" x-model="policy.safesearch.engines[eng.id].enabled" />
+                      </td>
+                      <td class="py-2 px-3 text-center">
+                        <template x-if="eng.images !== false"><input type="checkbox" class="toggle" x-model="policy.safesearch.engines[eng.id].block_images_tab" /></template>
+                        <template x-if="eng.images === false"><span class="text-gray-300">&mdash;</span></template>
+                      </td>
+                      <td class="py-2 px-3 text-center">
+                        <template x-if="eng.videos !== false"><input type="checkbox" class="toggle" x-model="policy.safesearch.engines[eng.id].block_videos_tab" /></template>
+                        <template x-if="eng.videos === false"><span class="text-gray-300">&mdash;</span></template>
+                      </td>
+                      <td class="py-2 px-3 text-center">
+                        <template x-if="eng.ai"><input type="checkbox" class="toggle" x-model="policy.safesearch.engines[eng.id].block_ai_tab" /></template>
+                        <template x-if="!eng.ai"><span class="text-gray-300">—</span></template>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- YouTube -->
+        <div class="section">
+          <div class="section-header" @click="open.yt = !open.yt">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.youtube.enabled" @click.stop />
+              <span class="shrink-0 leading-none" x-html="youtubeIcon"></span>
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.youtube">YouTube Channel Filter</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.youtubeDesc">Block or allow specific YouTube channels</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.yt ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.yt" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <div class="flex gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.youtube.mode" value="blacklist" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.ytBlacklist">Blacklist (block listed channels)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.youtube.mode" value="whitelist" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.ytWhitelist">Whitelist (only allow listed channels)</span>
+              </label>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.channels">Channels</span> <span class="text-gray-400" data-i18n="ed.channelsNote">(one per line — channel ID, @handle, or display name)</span></label>
+              <textarea x-model="ytChannelsText" @input="policy.youtube.channels = ytChannelsText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                        rows="5" placeholder="UCxxxxxxxxxxxxxxxxxxxxxxxx&#10;@MrBeast&#10;Some Channel Name"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              <p class="text-xs text-gray-400 mt-1" data-i18n="ed.ytHelp">Requires MITM active for youtube.com. Accepts channel IDs (UC…), @handles, or display names (case-insensitive). Name/handle matching depends on what YouTube returns; channel ID is the most reliable. Blocks the video, the watch page, and the channel page.</p>
+            </div>
+            <label x-show="policy.youtube.mode === 'whitelist'" class="flex items-center gap-3 cursor-pointer pt-1">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.youtube.block_home" />
+              <span class="text-sm text-gray-700"><span data-i18n="ed.ytBlockHome">Block the YouTube home page &amp; feeds</span> <span class="text-gray-400" data-i18n="ed.ytBlockHomeNote">(only listed channels reachable)</span></span>
+            </label>
+            <div class="border-t border-gray-100 pt-3 space-y-2">
+              <div class="text-xs font-medium text-gray-500 uppercase tracking-wide" data-i18n="ed.watchCleanup">Watch page cleanup</div>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.youtube.remove_comments" />
+                <span class="text-sm text-gray-700" data-i18n="ed.removeComments">Remove comments</span>
+              </label>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.youtube.remove_recommendations" />
+                <span class="text-sm text-gray-700" data-i18n="ed.removeRecs">Remove recommended-video sidebar</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Classifier -->
+        <div class="section">
+          <div class="section-header" @click="open.text = !open.text">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.text_classifier.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.textClf">Adult Text Classifier</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.textClfDesc">Detect and block pages with adult text content</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.text ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.text" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1">
+                <span data-i18n="ed.threshold">Threshold:</span> <span class="font-mono" x-text="policy.text_classifier.threshold"></span>
+              </label>
+              <input type="range" min="0.5" max="1" step="0.05" x-model.number="policy.text_classifier.threshold"
+                     class="w-full accent-blue-600" />
+              <div class="flex justify-between text-xs text-gray-400 mt-1">
+                <span data-i18n="ed.moreSensitive">More sensitive (0.5)</span><span data-i18n="ed.morePrecise">More precise (1.0)</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is slow (timeout)</label>
+                <select x-model="policy.text_classifier.on_timeout" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Allow the page, cache the verdict</option>
+                  <option value="block">Block until classified</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is unavailable</label>
+                <select x-model="policy.text_classifier.on_unavailable" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Allow</option>
+                  <option value="block">Block</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">Wait budget (ms, 0 = global)</label>
+                <input type="number" min="0" step="100" x-model.number="policy.text_classifier.budget_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
+                <textarea x-model="textExcludeText" @input="policy.text_classifier.exclude = textExcludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="medical-site.com&#10;biology-class.edu"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.onlyApplyTo">Only Apply To</span> <span class="text-gray-400" data-i18n="ed.leaveBlankAll">(leave blank for all)</span></label>
+                <textarea x-model="textIncludeText" @input="policy.text_classifier.include_only = textIncludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="specific-site.com&#10;another-site.net"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Classifier -->
+        <div class="section">
+          <div class="section-header" @click="open.img = !open.img">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.image_classifier.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.imgClf">Image Classifier (NSFW)</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.imgClfDesc">Detect adult images and blur or block them</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.img ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.img" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.image_classifier.action" value="blur" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.blurImage">Blur entire image</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.image_classifier.action" value="checkerboard" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.checkerboard">Checkerboard placeholder</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.image_classifier.action" value="block" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.replaceBlank">Replace with blank image</span>
+              </label>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1">
+                <span data-i18n="ed.detThreshold">Detection Threshold:</span> <span class="font-mono" x-text="policy.image_classifier.threshold"></span>
+              </label>
+              <input type="range" min="0.15" max="0.9" step="0.05" x-model.number="policy.image_classifier.threshold"
+                     class="w-full accent-blue-600" />
+              <div class="flex justify-between text-xs text-gray-400 mt-1">
+                <span data-i18n="ed.catchMore">Catch more (0.15)</span><span data-i18n="ed.fewerFp">Fewer false positives (0.9)</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1" data-i18n="ed.imgRecommend">~0.4 recommended. Thumbnails often score low; higher values miss them.</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1">
+                <span data-i18n="ed.minDimension">Minimum image size (px):</span> <span class="font-mono" x-text="policy.image_classifier.min_dimension"></span>
+              </label>
+              <input type="number" min="0" max="512" step="1" x-model.number="policy.image_classifier.min_dimension"
+                     class="w-32 border border-gray-300 rounded px-2 py-1 text-sm" />
+              <p class="text-xs text-gray-400 mt-1" data-i18n="ed.minDimHelp">Skip images whose largest side is under this many pixels (favicons, icons). Lower it to catch small thumbnails like Google image search (~100). 0 = classify everything.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is slow (timeout)</label>
+                <select x-model="policy.image_classifier.on_timeout" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="blur">Blur, cache the verdict</option>
+                  <option value="checkerboard">Checkerboard, cache the verdict</option>
+                  <option value="block">Blank image, cache the verdict</option>
+                  <option value="allow">Show the image, cache the verdict</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is unavailable</label>
+                <select x-model="policy.image_classifier.on_unavailable" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Show the image</option>
+                  <option value="blur">Blur</option>
+                  <option value="checkerboard">Checkerboard</option>
+                  <option value="block">Blank image</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">Wait budget (ms, 0 = global)</label>
+                <input type="number" min="0" step="100" x-model.number="policy.image_classifier.budget_ms" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.image_classifier.prefetch" />
+              Pre-score a page's images before the browser requests them (warms the cache; costs extra model time on first visit)
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
+                <textarea x-model="imgExcludeText" @input="policy.image_classifier.exclude = imgExcludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="art-museum.org&#10;medical.edu"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.onlyApplyTo">Only Apply To</span> <span class="text-gray-400" data-i18n="ed.leaveBlankAll">(leave blank for all)</span></label>
+                <textarea x-model="imgIncludeText" @input="policy.image_classifier.include_only = imgIncludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="specific-site.com&#10;another-site.net"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path</p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400">Requires MITM active for the site. Verdicts come from the local LLM (see the LLM page) and are cached, so a picture is only ever judged once.</p>
+          </div>
+        </div>
+
+        <!-- Video Classifier -->
+        <div class="section">
+          <div class="section-header" @click="open.video = !open.video">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.video_classifier.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900">Video Classifier (adult video)</div>
+                <div class="text-xs text-gray-500">Judge videos by their poster, YouTube thumbnail or decoded keyframes and refuse the ones the model finds adult</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.video ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.video" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.video_classifier.youtube" />
+              Judge YouTube videos by their thumbnail when the player loads (independent of the YouTube channel filter)
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.video_classifier.keyframes" />
+              Decode keyframes from video streams with ffmpeg (must be installed on the proxy machine; costs CPU per video)
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">
+                  Detection threshold: <span class="font-mono" x-text="policy.video_classifier.threshold"></span>
+                </label>
+                <input type="range" min="0.15" max="0.9" step="0.05" x-model.number="policy.video_classifier.threshold" class="w-full accent-blue-600" />
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1">If the model is slow (timeout)</label>
+                <select x-model="policy.video_classifier.on_timeout" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                  <option value="allow">Let the video play</option>
+                  <option value="block">Refuse until classified</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
+                <textarea x-model="videoExcludeText" @input="policy.video_classifier.exclude = videoExcludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.onlyApplyTo">Only Apply To</span> <span class="text-gray-400" data-i18n="ed.leaveBlankAll">(leave blank for all)</span></label>
+                <textarea x-model="videoIncludeText" @input="policy.video_classifier.include_only = videoIncludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400">A video judged adult is refused: its sources are removed from the page and later requests for the stream get 403. Posters and thumbnails are judged within the image wait budget.</p>
+          </div>
+        </div>
+
+        <!-- Ad blocking -->
+        <div class="section">
+          <div class="section-header" @click="open.ads = !open.ads">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="toggle" x-model="policy.adblock.enabled" @click.stop />
+              <div>
+                <div class="text-sm font-semibold text-gray-900">Ad &amp; tracker blocking</div>
+                <div class="text-xs text-gray-500">Block ad and tracker requests with EasyList/EasyPrivacy and hide ad containers; the local LLM classifies hosts the lists do not know</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.ads ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.ads" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.adblock.cosmetic" />
+              Hide ad containers in pages (cosmetic filtering, injects CSS)
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" class="w-4 h-4 accent-blue-600" x-model="policy.adblock.classify_unknown_hosts" />
+              Ask the local LLM about unknown third-party hosts that look like ad or tracking servers (cached per host)
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.excludeSites">Exclude Sites</label>
+                <textarea x-model="adsExcludeText" @input="policy.adblock.exclude = adsExcludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="www.cnn.com&#10;shop.example"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1">one per line · domain, *.wildcard, or URL with path · no ad blocking on these sites</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.onlyApplyTo">Only Apply To</span> <span class="text-gray-400" data-i18n="ed.leaveBlankAll">(leave blank for all)</span></label>
+                <textarea x-model="adsIncludeText" @input="policy.adblock.include_only = adsIncludeText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="specific-site.com"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400">Filter lists are updated from Settings → Ad blocking. Blocked ad requests are counted in metrics but not written to the block log.</p>
+          </div>
+        </div>
+
+        <!-- MITM Control -->
+        <div class="section">
+          <div class="section-header" @click="open.mitm = !open.mitm">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-5"></div><!-- spacer for toggle alignment -->
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.mitm">MITM Control</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.mitmDesc">Control which sites and clients are filtered</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.mitm ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.mitm" class="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <div class="flex gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.mitm.mode" value="exclude" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.mitmExclude">Exclude (MITM all except listed sites)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" x-model="policy.mitm.mode" value="include" class="text-blue-600" />
+                <span class="text-sm text-gray-700" data-i18n="ed.mitmInclude">Include (only MITM listed sites)</span>
+              </label>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.sites">Sites</span> <span class="text-gray-400" data-i18n="ed.onePerLine">(one per line)</span></label>
+              <textarea x-model="mitmSitesText" @input="policy.mitm.sites = mitmSitesText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                        rows="4" placeholder="mybank.com&#10;health-portal.com"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              <p class="text-xs text-gray-400 mt-1">one per line · domains only (subdomains included)</p>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3 space-y-3">
+              <div>
+                <div class="text-sm font-medium text-gray-800" data-i18n="ed.uaRules">User-Agent rules</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.uaRulesDesc">Skip filtering for matching clients (e.g. native apps, devices). Matched as case-insensitive substrings. Cannot bypass TLS interception &mdash; only skips content filtering.</div>
+              </div>
+              <div class="flex gap-4 flex-wrap">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" x-model="policy.mitm.ua_mode" value="off" class="text-blue-600" />
+                  <span class="text-sm text-gray-700" data-i18n="ed.uaOff">Off</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" x-model="policy.mitm.ua_mode" value="exclude" class="text-blue-600" />
+                  <span class="text-sm text-gray-700" data-i18n="ed.uaExclude">Exclude (don't filter listed user-agents)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" x-model="policy.mitm.ua_mode" value="include" class="text-blue-600" />
+                  <span class="text-sm text-gray-700" data-i18n="ed.uaInclude">Include (only filter listed user-agents)</span>
+                </label>
+              </div>
+              <div x-show="policy.mitm.ua_mode !== 'off'">
+                <label class="text-xs font-medium text-gray-700 block mb-1"><span data-i18n="ed.userAgents">User-Agents</span> <span class="text-gray-400" data-i18n="ed.onePerLine">(one per line)</span></label>
+                <textarea x-model="mitmUserAgentsText" @input="policy.mitm.user_agents = mitmUserAgentsText.split('\n').map(s=>s.trim()).filter(Boolean)"
+                          rows="3" placeholder="Spotify&#10;Roku&#10;CFNetwork"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block Page -->
+        <div class="section">
+          <div class="section-header" @click="open.bp = !open.bp">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-5"></div>
+              <div>
+                <div class="text-sm font-semibold text-gray-900" data-i18n="ed.blockPage">Block Page</div>
+                <div class="text-xs text-gray-500" data-i18n="ed.blockPageDesc">Customize the message shown when content is blocked</div>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open.bp ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div x-show="open.bp" class="px-6 pb-5 border-t border-gray-100 pt-4">
+            <label class="text-xs font-medium text-gray-700 block mb-1" data-i18n="ed.customMessage">Custom Message</label>
+            <textarea x-model="policy.block_page.message" rows="3"
+                      data-i18n-ph="ed.customMessagePh" placeholder="This content has been blocked by your network policy."
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Bottom save bar -->
+        <div class="flex justify-end gap-3 mt-2 mb-8">
+          <a href="index.html" class="px-4 py-2 text-sm font-medium text-gray-600 bg-card border border-gray-200 rounded-lg hover:bg-gray-50" data-i18n="common.cancel">Cancel</a>
+          <button @click="save()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" data-i18n="ed.savePolicy">Save Policy</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Accepts an IPv4/IPv6 address or CIDR range. Permissive but rejects
+    // obvious garbage so a typo doesn't silently become a dead source rule.
+    function isValidIpOrCidr(value) {
+      let host = value, prefix = null;
+      const slash = value.indexOf('/');
+      if (slash !== -1) {
+        host = value.slice(0, slash);
+        prefix = value.slice(slash + 1);
+        if (!/^\d+$/.test(prefix)) return false;
+      }
+      const isV4 = /^(\d{1,3})(\.\d{1,3}){3}$/.test(host) &&
+                   host.split('.').every(o => +o >= 0 && +o <= 255);
+      // IPv6: hex groups with :: compression, optional zone id.
+      const isV6 = /^[0-9a-fA-F:]+$/.test(host) && host.includes(':') &&
+                   (host.match(/::/g) || []).length <= 1;
+      if (slash !== -1) {
+        const p = +prefix;
+        if (isV4 && p >= 0 && p <= 32) return true;
+        if (isV6 && p >= 0 && p <= 128) return true;
+        return false;
+      }
+      return isV4 || isV6;
+    }
+
+    // Accepts a MAC with ':' or '-' separators (12 hex digits). Returns the
+    // canonical lowercase colon form, or '' if invalid.
+    function normalizeMac(value) {
+      const hex = (value || '').replace(/[^0-9a-fA-F]/g, '').toLowerCase();
+      if (!/^[0-9a-f]{12}$/.test(hex)) return '';
+      return hex.match(/.{2}/g).join(':');
+    }
+
+    // engineTile builds an inline-SVG brand tile (a rounded square in `color`
+    // with a white `letter`) for a search engine, rendered offline via x-html.
+    function engineTile(color, letter) {
+      return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">' +
+        '<rect width="20" height="20" rx="5" fill="' + color + '"/>' +
+        '<text x="10" y="14.5" text-anchor="middle" font-size="12" font-weight="700" ' +
+        'fill="#fff" font-family="Arial, Helvetica, sans-serif">' + letter + '</text></svg>';
+    }
+
+    // The iconic YouTube play button (red rounded rect + white triangle),
+    // inline so it renders without any CDN in the Android WebView.
+    const YOUTUBE_ICON =
+      '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">' +
+      '<rect x="1" y="4.5" width="22" height="15" rx="4.2" fill="#FF0000"/>' +
+      '<path d="M10 8.5l6.2 3.5L10 15.5z" fill="#fff"/></svg>';
+
+    function editor() {
+      const params = new URLSearchParams(location.search);
+      const editName = params.get('name');
+      const isNew = params.get('action') === 'new' || !editName;
+
+      return {
+        isNew,
+        editName,
+        policy: defaultPolicy(),
+        categories: [],
+        alert: '',
+        alertType: 'success',
+        ipInput: '',
+        ipError: '',
+        macInput: '',
+        macError: '',
+        macNeighbors: [],
+        macScanning: false,
+        macScanError: '',
+        open: { schedule: false, url: false, doh: false, safe: false, yt: false, text: false, img: false, video: false, ads: false, mitm: false, bp: false },
+        youtubeIcon: YOUTUBE_ICON,
+        // SafeSearch engines (id must match proxy/addons/safesearch.py). ai=false
+        // hides the AI column for engines with no AI assistant to block.
+        // icon is an inline SVG (rendered offline, no CDN) — a rounded tile in
+        // the engine's brand color with its initial, kept visually consistent
+        // across engines.
+        safeEngines: [
+          { id: 'google', label: 'Google', ai: true, icon: engineTile('#4285F4', 'G') },
+          { id: 'bing', label: 'Bing', ai: true, icon: engineTile('#0D8484', 'b') },
+          { id: 'duckduckgo', label: 'DuckDuckGo', ai: true, icon: engineTile('#DE5833', 'd') },
+          { id: 'yahoo', label: 'Yahoo', ai: false, icon: engineTile('#5F01D1', 'Y') },
+          { id: 'brave', label: 'Brave', ai: true, icon: engineTile('#FB542B', 'B') },
+          { id: 'yandex', label: 'Yandex', ai: true, icon: engineTile('#FC3F1D', 'Ya') },
+          { id: 'youtube', label: 'YouTube', ai: false, images: false, videos: false, icon: engineTile('#FF0000', 'YT') },
+        ],
+        // Family-safety DoH resolvers (RFC 8484). The model stores the URL; the
+        // dropdown falls back to "Custom…" for any value not in this list.
+        dohPresets: [
+          { url: 'https://1.1.1.3/dns-query', label: 'Cloudflare for Families — malware + adult' },
+          { url: 'https://1.1.1.2/dns-query', label: 'Cloudflare for Families — malware only' },
+          { url: 'https://doh.cleanbrowsing.org/doh/family-filter/', label: 'CleanBrowsing — Family filter' },
+          { url: 'https://doh.cleanbrowsing.org/doh/adult-filter/', label: 'CleanBrowsing — Adult filter' },
+          { url: 'https://doh.cleanbrowsing.org/doh/security-filter/', label: 'CleanBrowsing — Security filter' },
+          { url: 'https://family.adguard-dns.com/dns-query', label: 'AdGuard — Family Protection' },
+          { url: 'https://dns.adguard-dns.com/dns-query', label: 'AdGuard — Default (malware + ads)' },
+          { url: 'https://dns.quad9.net/dns-query', label: 'Quad9 — malware blocking' },
+        ],
+        // text area mirrors
+        allowText: '', blockText: '',
+        dohExcludeText: '', dohIncludeText: '',
+        ytChannelsText: '',
+        textExcludeText: '', textIncludeText: '',
+        imgExcludeText: '', imgIncludeText: '',
+        adsExcludeText: '', adsIncludeText: '',
+        videoExcludeText: '', videoIncludeText: '',
+        mitmSitesText: '',
+        mitmUserAgentsText: '',
+
+        addIp() {
+          const v = this.ipInput.trim().replace(/,$/, '').trim();
+          this.ipInput = '';
+          if (!v) return;
+          if (!isValidIpOrCidr(v)) {
+            this.ipError = window.wfT('ed.ipInvalid').replace('{v}', v);
+            return;
+          }
+          this.ipError = '';
+          if (!this.policy.source_ips.includes(v)) this.policy.source_ips.push(v);
+        },
+        removeIp(i) {
+          this.policy.source_ips.splice(i, 1);
+        },
+
+        addMac() {
+          const raw = this.macInput.trim().replace(/,$/, '').trim();
+          this.macInput = '';
+          if (!raw) return;
+          const mac = normalizeMac(raw);
+          if (!mac) {
+            this.macError = window.wfT('ed.macInvalid').replace('{v}', raw);
+            return;
+          }
+          this.macError = '';
+          if (!this.policy.source_macs.includes(mac)) this.policy.source_macs.push(mac);
+        },
+        removeMac(i) {
+          this.policy.source_macs.splice(i, 1);
+        },
+        pickNeighbor(mac) {
+          if (!this.policy.source_macs.includes(mac)) this.policy.source_macs.push(mac);
+        },
+        async scanNetwork() {
+          this.macScanning = true;
+          this.macScanError = '';
+          try {
+            const r = await fetch('/api/tools/neighbors');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const data = await r.json();
+            this.macNeighbors = data.neighbors || [];
+            if (!this.macNeighbors.length) {
+              this.macScanError = window.wfT('ed.macScanEmpty');
+            }
+          } catch (e) {
+            this.macScanError = window.wfT('ed.macScanError');
+          } finally {
+            this.macScanning = false;
+          }
+        },
+
+        // DOH server dropdown: show the matching preset, else "Custom…".
+        dohSelectValue() {
+          const s = this.policy.doh.server || '';
+          return this.dohPresets.some(p => p.url === s) ? s : '__custom__';
+        },
+        dohSelectChange(v) {
+          this.policy.doh.server = (v === '__custom__') ? '' : v;
+        },
+
+        async init() {
+          try {
+            const r = await fetch('/api/categories');
+            if (r.ok) this.categories = (await r.json()).categories || [];
+          } catch (e) {}
+          if (!isNew && editName) {
+            try {
+              const res = await fetch(`/api/policies/${encodeURIComponent(editName)}`);
+              if (res.ok) {
+                this.policy = await res.json();
+                const tcd = { on_timeout: 'allow', on_unavailable: 'allow', budget_ms: 0 };
+                const icd = { on_timeout: 'blur', on_unavailable: 'allow', budget_ms: 0, prefetch: true };
+                this.policy.text_classifier = Object.assign({}, tcd, this.policy.text_classifier || {});
+                this.policy.image_classifier = Object.assign({}, icd, this.policy.image_classifier || {});
+                this.policy.adblock = Object.assign({ enabled: false, cosmetic: true, classify_unknown_hosts: true, exclude: [], include_only: [] }, this.policy.adblock || {});
+                this.policy.video_classifier = Object.assign({ enabled: false, threshold: 0.4, on_timeout: 'allow', keyframes: false, youtube: true, exclude: [], include_only: [] }, this.policy.video_classifier || {});
+                // Backfill fields that older policy files may lack.
+                this.policy.source_macs = this.policy.source_macs || [];
+                this.policy.schedule = this.policy.schedule || { enabled: false, active_windows: [] };
+                this.policy.schedule.active_windows = this.policy.schedule.active_windows || [];
+                this.policy.url_filter.categories = this.policy.url_filter.categories || [];
+                this.policy.url_filter.mode = this.policy.url_filter.mode || 'blacklist';
+                if (this.policy.url_filter.block_quic === undefined) this.policy.url_filter.block_quic = true;
+                this.policy.mitm.ua_mode = this.policy.mitm.ua_mode || 'off';
+                this.policy.mitm.user_agents = this.policy.mitm.user_agents || [];
+                this._normalizeSafeEngines();
+                this._syncTextAreas();
+              }
+            } catch (e) { this.showAlert(window.wfT('ed.failLoad'), 'error'); }
+          }
+        },
+
+        _normalizeSafeEngines() {
+          const ss = this.policy.safesearch;
+          if (!ss.engines || typeof ss.engines !== 'object') ss.engines = {};
+          // Migrate the older global flags (applied to every engine) if present.
+          const legacy = {
+            block_images_tab: !!ss.block_images_tab,
+            block_videos_tab: !!ss.block_videos_tab,
+            block_ai_tab: !!ss.block_ai_tab,
+          };
+          const hadLegacy = (legacy.block_images_tab || legacy.block_videos_tab || legacy.block_ai_tab)
+            && Object.keys(ss.engines).length === 0;
+          delete ss.block_images_tab; delete ss.block_videos_tab; delete ss.block_ai_tab;
+          for (const eng of this.safeEngines) {
+            const base = hadLegacy
+              ? { enabled: true, ...legacy }
+              : { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false };
+            ss.engines[eng.id] = Object.assign(base, ss.engines[eng.id] || {});
+          }
+        },
+
+        _syncTextAreas() {
+          this.allowText = (this.policy.url_filter.allow || []).join('\n');
+          this.blockText = (this.policy.url_filter.block || []).join('\n');
+          this.dohExcludeText = (this.policy.doh.exclude || []).join('\n');
+          this.dohIncludeText = (this.policy.doh.include_only || []).join('\n');
+          this.ytChannelsText = (this.policy.youtube.channels || []).join('\n');
+          this.textExcludeText = (this.policy.text_classifier.exclude || []).join('\n');
+          this.textIncludeText = (this.policy.text_classifier.include_only || []).join('\n');
+          this.imgExcludeText = (this.policy.image_classifier.exclude || []).join('\n');
+          this.imgIncludeText = (this.policy.image_classifier.include_only || []).join('\n');
+          this.adsExcludeText = (this.policy.adblock.exclude || []).join('\n');
+          this.adsIncludeText = (this.policy.adblock.include_only || []).join('\n');
+          this.videoExcludeText = (this.policy.video_classifier.exclude || []).join('\n');
+          this.videoIncludeText = (this.policy.video_classifier.include_only || []).join('\n');
+          this.mitmSitesText = (this.policy.mitm.sites || []).join('\n');
+          this.mitmUserAgentsText = (this.policy.mitm.user_agents || []).join('\n');
+        },
+
+        async save() {
+          // Commit any IP typed but not yet added (user clicked Save directly).
+          if (this.ipInput.trim()) this.addIp();
+          if (this.ipError) {
+            this.showAlert(this.ipError, 'error'); return;
+          }
+
+          if (!this.policy.name.trim()) {
+            this.showAlert(window.wfT('ed.nameRequired'), 'error'); return;
+          }
+
+          // Trim stray whitespace from the DOH URL (common on paste).
+          this.policy.doh.server = (this.policy.doh.server || '').trim();
+
+          // The API rejects string-typed numbers, and a cleared number input
+          // leaves '' behind even with x-model.number - coerce before send.
+          const num = (v, fallback) => { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; };
+          this.policy.text_classifier.threshold = num(this.policy.text_classifier.threshold, 0.8);
+          this.policy.image_classifier.threshold = num(this.policy.image_classifier.threshold, 0.4);
+          this.policy.image_classifier.min_dimension = Math.round(num(this.policy.image_classifier.min_dimension, 100));
+          this.policy.text_classifier.budget_ms = Math.round(num(this.policy.text_classifier.budget_ms, 0));
+          this.policy.image_classifier.budget_ms = Math.round(num(this.policy.image_classifier.budget_ms, 0));
+          this.policy.video_classifier.threshold = num(this.policy.video_classifier.threshold, 0.4);
+
+          const method = this.isNew ? 'POST' : 'PUT';
+          const url = this.isNew
+            ? '/api/policies'
+            : `/api/policies/${encodeURIComponent(this.editName)}`;
+
+          try {
+            const res = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.policy),
+            });
+            if (res.ok) {
+              this.showAlert(window.wfT('ed.savedOk'), 'success');
+              setTimeout(() => { location.href = 'index.html'; }, 800);
+            } else {
+              const err = await res.json();
+              this.showAlert(err.detail || window.wfT('ed.saveFailed'), 'error');
+            }
+          } catch (e) {
+            this.showAlert(window.wfT('ed.netErr') + e.message, 'error');
+          }
+        },
+
+        showAlert(msg, type) {
+          this.alert = msg;
+          this.alertType = type;
+          setTimeout(() => { this.alert = ''; }, 4000);
+        },
+      };
+    }
+
+    function defaultPolicy() {
+      return {
+        name: '',
+        inactive: false,
+        source_ips: [],
+        source_macs: [],
+        schedule: { enabled: false, active_windows: [] },
+        url_filter: { enabled: false, allow: [], block: [], mode: 'blacklist', categories: [], block_quic: true },
+        adblock: { enabled: false, cosmetic: true, classify_unknown_hosts: true, exclude: [], include_only: [] },
+        video_classifier: { enabled: false, threshold: 0.4, on_timeout: 'allow', keyframes: false, youtube: true, exclude: [], include_only: [] },
+        doh: { enabled: false, server: 'https://1.1.1.3/dns-query', exclude: [], include_only: [] },
+        safesearch: { enabled: false, engines: {
+          google: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+          bing: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+          duckduckgo: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+          yahoo: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+          brave: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+          yandex: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+          youtube: { enabled: true, block_images_tab: false, block_videos_tab: false, block_ai_tab: false },
+        }, exclude: [], include_only: [] },
+        youtube: { enabled: false, mode: 'blacklist', channels: [], exclude: [], include_only: [], block_home: true, remove_comments: false, remove_recommendations: false },
+        text_classifier: { enabled: false, threshold: 0.8, exclude: [], include_only: [], on_timeout: 'allow', on_unavailable: 'allow', budget_ms: 0 },
+        image_classifier: { enabled: false, action: 'blur', threshold: 0.4, min_dimension: 100, exclude: [], include_only: [], on_timeout: 'blur', on_unavailable: 'allow', budget_ms: 0, prefetch: true },
+        mitm: { mode: 'exclude', sites: [], ua_mode: 'off', user_agents: [] },
+        block_page: { template: 'default', message: '' },
+      };
+    }
+  </script>
+</body>
+</html>

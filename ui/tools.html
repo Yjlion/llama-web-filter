@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.tools">Tools — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="toolsPage()" x-init="init()">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.rules">Rules</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+      <div class="px-3 py-4 border-t border-sidebar-border">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900" data-i18n="tools.title">Tools</h1>
+          <p class="text-sm text-gray-500 mt-1" data-i18n="tools.subtitle">Diagnostic utilities for URL scanning, YouTube lookup, DNS, and network info</p>
+        </div>
+
+        <div class="space-y-6">
+
+          <!-- ── 0. Classifier Health ── -->
+          <!-- Deliberately above the scanner: when a scan comes back empty or
+               errors, this is the card that explains why. -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-semibold text-gray-900" data-i18n="tools.health">Classifier Health</h2>
+                <p class="text-xs text-gray-400 mt-0.5" data-i18n="tools.healthDesc">Check that the embedded text and image classifiers loaded</p>
+              </div>
+              <button @click="runHealth()"
+                      :disabled="health.loading"
+                      class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span x-show="!health.loading" data-i18n="tools.refresh">Refresh</span>
+                <span x-show="health.loading" data-i18n="tools.checking">Checking…</span>
+              </button>
+            </div>
+            <div class="px-6 py-5 space-y-3">
+              <div x-show="health.error" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2" x-text="health.error"></div>
+              <div x-show="health.result" x-cloak class="grid grid-cols-2 gap-3">
+                <template x-for="row in healthRows()" :key="row.key">
+                  <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-medium text-gray-500" x-text="row.label"></span>
+                      <span class="badge"
+                            :class="row.ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                            x-text="row.status"></span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1" x-text="row.detail"></div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 1. NSFW URL Scanner ── -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="tools.scan">NSFW URL Scanner</h2>
+              <p class="text-xs text-gray-400 mt-0.5" data-i18n="tools.scanDesc">Scan a URL for adult text or images</p>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+              <div class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-48">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.scanUrl">URL to scan</label>
+                  <input type="url" x-model="scan.url" data-i18n-ph="tools.scanUrlPh" placeholder="https://example.com"
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="w-32">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.textThreshold">Text threshold</label>
+                  <input type="number" x-model.number="scan.textThreshold" min="0" max="1" step="0.05"
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="w-36">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.imageThreshold">Image threshold</label>
+                  <input type="number" x-model.number="scan.imageThreshold" min="0" max="1" step="0.05"
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="w-28">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.maxImages">Max images</label>
+                  <input type="number" x-model.number="scan.maxImages" min="1" max="200"
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <button @click="runScan()"
+                        :disabled="scan.loading"
+                        class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                  <span x-show="!scan.loading" data-i18n="tools.scanBtn">Scan</span>
+                  <span x-show="scan.loading" data-i18n="tools.scanning">Scanning…</span>
+                </button>
+              </div>
+
+              <!-- Scan error -->
+              <div x-show="scan.error" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2" x-text="scan.error"></div>
+
+              <!-- Scan result: image type -->
+              <div x-show="scan.result && scan.result.type === 'image'" x-cloak class="space-y-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-xs font-medium text-gray-500" data-i18n="tools.typeLabel">Type:</span>
+                  <span class="badge bg-blue-100 text-blue-700">image</span>
+                  <span class="text-xs font-medium text-gray-500 ml-2" data-i18n="tools.nsfwLabel">NSFW:</span>
+                  <span class="badge" :class="scan.result.nsfw ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                        x-text="scan.result.nsfw ? 'Yes' : 'No'"></span>
+                </div>
+                <div x-show="scan.result.detections && scan.result.detections.length > 0" class="overflow-x-auto">
+                  <table class="w-full text-xs border-collapse">
+                    <thead><tr class="border-b border-gray-100 text-left">
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase" data-i18n="tools.colClass">Class</th>
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase" data-i18n="tools.colScore">Score</th>
+                    </tr></thead>
+                    <tbody>
+                      <template x-for="(d, i) in scan.result.detections" :key="i">
+                        <tr class="border-b border-gray-50">
+                          <td class="py-1 pr-4 font-mono text-gray-700" x-text="d.class"></td>
+                          <td class="py-1 pr-4 text-gray-600" x-text="typeof d.score === 'number' ? d.score.toFixed(3) : d.score"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Scan result: page type -->
+              <div x-show="scan.result && scan.result.type === 'page'" x-cloak class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <span class="badge bg-blue-100 text-blue-700">page</span>
+                  <span class="text-xs font-medium text-gray-500">Text NSFW:</span>
+                  <span class="badge" :class="scan.result.text && scan.result.text.nsfw ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                        x-text="scan.result.text && scan.result.text.nsfw ? 'Yes' : 'No'"></span>
+                  <span class="text-xs text-gray-400"
+                        x-text="scan.result.text ? ('keyword_score: ' + (scan.result.text.keyword_score ?? '—') + ' / threshold: ' + (scan.result.text.threshold ?? '—')) : ''"></span>
+                </div>
+                <div x-show="scan.result.images && scan.result.images.length > 0" class="overflow-x-auto">
+                  <table class="w-full text-xs border-collapse">
+                    <thead><tr class="border-b border-gray-100 text-left">
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase" data-i18n="tools.colImageUrl">Image URL</th>
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase" data-i18n="tools.colNsfw">NSFW</th>
+                      <th class="py-1.5 font-medium text-gray-500 uppercase" data-i18n="tools.colTopDetection">Top Detection / Error</th>
+                    </tr></thead>
+                    <tbody>
+                      <template x-for="(img, i) in scan.result.images" :key="i">
+                        <tr class="border-b border-gray-50">
+                          <td class="py-1 pr-4 font-mono text-gray-600 max-w-xs truncate" :title="img.url" x-text="img.url"></td>
+                          <td class="py-1 pr-4">
+                            <span class="badge" :class="img.nsfw ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                                  x-text="img.nsfw ? 'Yes' : 'No'"></span>
+                          </td>
+                          <td class="py-1 font-mono text-gray-500"
+                              x-text="img.error ? ('Error: ' + img.error) : (img.detections && img.detections.length ? img.detections[0].class + ' (' + (img.detections[0].score ? img.detections[0].score.toFixed(3) : '') + ')' : '—')"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Scan result: other / error -->
+              <div x-show="scan.result && (scan.result.type === 'other' || scan.result.type === 'error')" x-cloak>
+                <div class="text-sm text-gray-600 bg-gray-50 rounded-lg px-4 py-3">
+                  <span class="font-medium" x-text="scan.result ? scan.result.type : ''"></span>
+                  <span class="ml-2 text-gray-500"
+                        x-text="scan.result ? (scan.result.content_type || scan.result.error || '') : ''"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 2. YouTube Decoder ── -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="tools.youtube">YouTube Decoder</h2>
+              <p class="text-xs text-gray-400 mt-0.5" data-i18n="tools.youtubeDesc">Look up video or channel info from a YouTube URL</p>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+              <div class="flex gap-3 items-end">
+                <div class="flex-1">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.youtubeUrl">YouTube URL</label>
+                  <input type="url" x-model="yt.url" data-i18n-ph="tools.youtubeUrlPh" placeholder="https://www.youtube.com/watch?v=..."
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <button @click="runYt()"
+                        :disabled="yt.loading"
+                        class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                  <span x-show="!yt.loading" data-i18n="tools.decodeBtn">Decode</span>
+                  <span x-show="yt.loading" data-i18n="tools.decoding">Decoding…</span>
+                </button>
+              </div>
+
+              <div x-show="yt.error" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2" x-text="yt.error"></div>
+
+              <div x-show="yt.result" x-cloak class="space-y-3">
+                <!-- Thumbnail -->
+                <div x-show="yt.result && yt.result.thumbnail_url" class="flex items-start gap-4">
+                  <img :src="yt.result ? yt.result.thumbnail_url : ''" alt="thumbnail"
+                       class="w-32 rounded-lg border border-gray-100 object-cover" />
+                  <div class="space-y-1">
+                    <div x-show="yt.result && yt.result.title" class="font-medium text-gray-900 text-sm" x-text="yt.result ? yt.result.title : ''"></div>
+                    <div x-show="yt.result && yt.result.author_name" class="text-xs text-gray-500">
+                      <span>By: </span>
+                      <a x-show="yt.result && yt.result.author_url"
+                         :href="yt.result ? yt.result.author_url : '#'"
+                         target="_blank" rel="noopener"
+                         class="text-blue-600 hover:underline" x-text="yt.result ? yt.result.author_name : ''"></a>
+                      <span x-show="yt.result && !yt.result.author_url" x-text="yt.result ? yt.result.author_name : ''"></span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Fields table -->
+                <div class="overflow-x-auto">
+                  <table class="text-xs border-collapse w-auto">
+                    <tbody>
+                      <tr class="border-b border-gray-50">
+                        <td class="py-1 pr-6 font-medium text-gray-500 whitespace-nowrap">Kind</td>
+                        <td class="py-1 font-mono text-gray-700" x-text="yt.result ? yt.result.kind : ''"></td>
+                      </tr>
+                      <tr x-show="yt.result && yt.result.video_id" class="border-b border-gray-50">
+                        <td class="py-1 pr-6 font-medium text-gray-500 whitespace-nowrap">Video ID</td>
+                        <td class="py-1 font-mono text-gray-700" x-text="yt.result ? yt.result.video_id : ''"></td>
+                      </tr>
+                      <tr x-show="yt.result && yt.result.channel" class="border-b border-gray-50">
+                        <td class="py-1 pr-6 font-medium text-gray-500 whitespace-nowrap">Channel</td>
+                        <td class="py-1 font-mono text-gray-700" x-text="yt.result ? yt.result.channel : ''"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div x-show="yt.result && yt.result.oembed_error" class="text-xs text-amber-600 bg-amber-50 rounded px-3 py-1.5"
+                     x-text="'oEmbed: ' + (yt.result ? yt.result.oembed_error : '')"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 3. DNS / DOH Query ── -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="tools.doh">DNS / DOH Query</h2>
+              <p class="text-xs text-gray-400 mt-0.5" data-i18n="tools.dohDesc">Test domain resolution via a DNS-over-HTTPS server</p>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+              <div class="flex flex-wrap gap-3 items-end">
+                <div class="w-48">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.domain">Domain</label>
+                  <input type="text" x-model="doh.domain" data-i18n-ph="tools.domainPh" placeholder="example.com"
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="flex-1 min-w-64">
+                  <label class="block text-xs font-medium text-gray-600 mb-1" data-i18n="tools.dohServer">DOH server (optional)</label>
+                  <input type="url" x-model="doh.server" data-i18n-ph="tools.dohServerPh" placeholder="https://dns.google/dns-query"
+                         class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <button @click="runDoh()"
+                        :disabled="doh.loading"
+                        class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                  <span x-show="!doh.loading" data-i18n="tools.queryBtn">Query</span>
+                  <span x-show="doh.loading" data-i18n="tools.querying">Querying…</span>
+                </button>
+              </div>
+
+              <div x-show="doh.error" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2" x-text="doh.error"></div>
+
+              <div x-show="doh.result" x-cloak class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3 text-xs">
+                  <span class="text-gray-500">Server:</span>
+                  <span class="font-mono text-gray-700" x-text="doh.result ? doh.result.server : ''"></span>
+                  <span class="ml-2 text-gray-500">RCODE:</span>
+                  <span class="font-mono text-gray-700" x-text="doh.result ? doh.result.rcode : ''"></span>
+                  <span class="ml-2 text-gray-500">Blocked:</span>
+                  <span class="badge ml-1"
+                        :class="doh.result && doh.result.blocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                        x-text="doh.result && doh.result.blocked ? 'Yes' : 'No'"></span>
+                  <span x-show="doh.result && doh.result.detail" class="text-gray-400 ml-1" x-text="doh.result ? ('(' + doh.result.detail + ')') : ''"></span>
+                </div>
+                <div x-show="doh.result && doh.result.records && doh.result.records.length > 0" class="overflow-x-auto">
+                  <table class="w-full text-xs border-collapse">
+                    <thead><tr class="border-b border-gray-100 text-left">
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase">Type</th>
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase">Name</th>
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase">TTL</th>
+                      <th class="py-1.5 font-medium text-gray-500 uppercase">Data</th>
+                    </tr></thead>
+                    <tbody>
+                      <template x-for="(rec, i) in (doh.result ? doh.result.records : [])" :key="i">
+                        <tr class="border-b border-gray-50">
+                          <td class="py-1 pr-4 font-mono text-blue-700" x-text="rec.type"></td>
+                          <td class="py-1 pr-4 font-mono text-gray-700" x-text="rec.name"></td>
+                          <td class="py-1 pr-4 text-gray-500" x-text="rec.ttl"></td>
+                          <td class="py-1 font-mono text-gray-700" x-text="rec.data"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+                <div x-show="doh.result && (!doh.result.records || doh.result.records.length === 0)"
+                     class="text-xs text-gray-400" data-i18n="tools.noRecords">No records returned.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 4. Public IP ── -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="tools.publicIp">Public IP</h2>
+              <p class="text-xs text-gray-400 mt-0.5" data-i18n="tools.publicIpDesc">Show the public IP address of this proxy server</p>
+            </div>
+            <div class="px-6 py-5 flex items-center gap-4">
+              <button @click="runPublicIp()"
+                      :disabled="pip.loading"
+                      class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span data-i18n="tools.checkIpBtn">Check IP</span>
+              </button>
+              <span x-show="pip.loading" class="text-sm text-gray-400" data-i18n="tools.checking">Checking…</span>
+              <span x-show="pip.error" class="text-sm text-red-600" x-text="pip.error"></span>
+              <span x-show="pip.ip" class="font-mono text-lg font-bold text-gray-900" x-text="pip.ip"></span>
+            </div>
+          </div>
+
+          <!-- ── 5. Policy Simulator ── -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900" data-i18n="tools.sim">Policy Simulator</h2>
+              <p class="text-xs text-gray-400 mt-0.5" data-i18n="tools.simDesc">See which policy a client would get, and what each filter would do to a URL</p>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1" data-i18n="tools.simClientIp">Client IP</label>
+                  <input type="text" x-model="sim.clientIp" placeholder="192.168.1.50"
+                         @keydown.enter="runSim()"
+                         class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1" data-i18n="tools.simMac">Client MAC (optional)</label>
+                  <input type="text" x-model="sim.clientMac" placeholder="aa:bb:cc:dd:ee:ff"
+                         @keydown.enter="runSim()"
+                         class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1" data-i18n="tools.simUrl">URL (optional)</label>
+                  <input type="text" x-model="sim.url" placeholder="https://example.com/page"
+                         @keydown.enter="runSim()"
+                         class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div>
+                <button @click="runSim()"
+                        :disabled="sim.loading || !sim.clientIp"
+                        class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span x-show="!sim.loading" data-i18n="tools.simBtn">Simulate</span>
+                  <span x-show="sim.loading" data-i18n="tools.simulating">Simulating…</span>
+                </button>
+              </div>
+
+              <div x-show="sim.error" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2" x-text="sim.error"></div>
+
+              <div x-show="sim.result" x-cloak class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <span class="text-xs font-medium text-gray-500" data-i18n="tools.simPolicy">Policy:</span>
+                  <span class="badge bg-blue-100 text-blue-700"
+                        x-text="sim.result.policy || (sim.result.action === 'no_policy' ? 'none' : '—')"></span>
+                  <span class="text-xs font-medium text-gray-500 ml-2" data-i18n="tools.simAction">Result:</span>
+                  <span class="badge"
+                        :class="sim.result.action === 'blocked' ? 'bg-red-100 text-red-700'
+                              : sim.result.action === 'allowed' || sim.result.action === 'ok' ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-700'"
+                        x-text="sim.result.action"></span>
+                </div>
+                <div class="text-xs text-gray-500" x-text="sim.result.schedule_note"></div>
+                <div x-show="sim.result.decisions && sim.result.decisions.length > 0" class="overflow-x-auto">
+                  <table class="w-full text-xs border-collapse">
+                    <thead><tr class="border-b border-gray-100 text-left">
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase" data-i18n="tools.simComponent">Component</th>
+                      <th class="py-1.5 pr-4 font-medium text-gray-500 uppercase" data-i18n="tools.simDecision">Decision</th>
+                      <th class="py-1.5 font-medium text-gray-500 uppercase" data-i18n="tools.simReason">Reason</th>
+                    </tr></thead>
+                    <tbody>
+                      <template x-for="(d, i) in sim.result.decisions" :key="i">
+                        <tr class="border-b border-gray-50">
+                          <td class="py-1 pr-4 font-mono text-gray-700" x-text="d.component"></td>
+                          <td class="py-1 pr-4 text-gray-600" x-text="d.action"></td>
+                          <td class="py-1 text-gray-500" x-text="d.reason || '—'"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /space-y-6 -->
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toolsPage() {
+      return {
+        scan: {
+          url: '',
+          textThreshold: 0.80,
+          imageThreshold: 0.4,
+          maxImages: 50,
+          loading: false,
+          result: null,
+          error: '',
+        },
+        yt: {
+          url: '',
+          loading: false,
+          result: null,
+          error: '',
+        },
+        doh: {
+          domain: '',
+          server: '',
+          loading: false,
+          result: null,
+          error: '',
+        },
+        pip: {
+          loading: false,
+          ip: '',
+          error: '',
+        },
+        health: {
+          loading: false,
+          result: null,
+          error: '',
+        },
+        sim: {
+          clientIp: '',
+          clientMac: '',
+          url: '',
+          loading: false,
+          result: null,
+          error: '',
+        },
+
+        init() { this.runHealth(); },
+
+        async runHealth() {
+          this.health.loading = true;
+          this.health.error = '';
+          try {
+            const res = await fetch('/api/tools/classifier-health');
+            const data = await res.json();
+            if (!res.ok) {
+              this.health.error = data.detail || `HTTP ${res.status}`;
+            } else {
+              this.health.result = data;
+            }
+          } catch (e) {
+            this.health.error = 'Network error: ' + e.message;
+          } finally {
+            this.health.loading = false;
+          }
+        },
+
+        healthRows() {
+          const r = this.health.result;
+          if (!r) return [];
+          const rows = [];
+          const t = r.text_classifier || {};
+          rows.push({
+            key: 'text',
+            label: window.wfT('tools.healthText') || 'Text classifier',
+            status: t.status || 'unknown',
+            ok: t.status === 'available',
+            detail: t.detail || '',
+          });
+          const i = r.image_classifier || {};
+          rows.push({
+            key: 'image',
+            label: window.wfT('tools.healthImage') || 'Image classifier',
+            status: i.status || 'unknown',
+            ok: i.status === 'available',
+            detail: i.detail || '',
+          });
+          return rows;
+        },
+
+        async runSim() {
+          if (!this.sim.clientIp) return;
+          this.sim.loading = true;
+          this.sim.result = null;
+          this.sim.error = '';
+          try {
+            const body = { client_ip: this.sim.clientIp };
+            if (this.sim.clientMac.trim()) body.client_mac = this.sim.clientMac.trim();
+            if (this.sim.url.trim()) body.url = this.sim.url.trim();
+            const res = await fetch('/api/tools/policy-simulate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+              this.sim.error = data.detail || `HTTP ${res.status}`;
+            } else {
+              this.sim.result = data;
+            }
+          } catch (e) {
+            this.sim.error = 'Network error: ' + e.message;
+          } finally {
+            this.sim.loading = false;
+          }
+        },
+
+        async runScan() {
+          this.scan.loading = true;
+          this.scan.result = null;
+          this.scan.error = '';
+          try {
+            const body = { url: this.scan.url };
+            if (this.scan.textThreshold !== '') body.text_threshold = this.scan.textThreshold;
+            if (this.scan.imageThreshold !== '') body.image_threshold = this.scan.imageThreshold;
+            if (this.scan.maxImages !== '') body.max_images = this.scan.maxImages;
+            const res = await fetch('/api/tools/scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              this.scan.error = err.detail || err.error || `HTTP ${res.status}`;
+            } else {
+              this.scan.result = await res.json();
+            }
+          } catch (e) {
+            this.scan.error = 'Network error: ' + e.message;
+          } finally {
+            this.scan.loading = false;
+          }
+        },
+
+        async runYt() {
+          this.yt.loading = true;
+          this.yt.result = null;
+          this.yt.error = '';
+          try {
+            const res = await fetch('/api/tools/youtube', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url: this.yt.url }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              this.yt.error = err.detail || err.error || `HTTP ${res.status}`;
+            } else {
+              this.yt.result = await res.json();
+            }
+          } catch (e) {
+            this.yt.error = 'Network error: ' + e.message;
+          } finally {
+            this.yt.loading = false;
+          }
+        },
+
+        async runDoh() {
+          this.doh.loading = true;
+          this.doh.result = null;
+          this.doh.error = '';
+          try {
+            const body = { domain: this.doh.domain };
+            if (this.doh.server.trim()) body.server = this.doh.server.trim();
+            const res = await fetch('/api/tools/doh', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            // A failed lookup still comes back 200 with rcode=SERVFAIL and the
+            // reason in `detail` — there is no `error` field on this endpoint,
+            // so checking for one would render a failure as a success card.
+            if (!res.ok) {
+              this.doh.error = data.detail || `HTTP ${res.status}`;
+            } else if (data.rcode && data.rcode !== 'NOERROR') {
+              this.doh.error = data.detail || `Lookup failed (${data.rcode})`;
+            } else {
+              this.doh.result = data;
+            }
+          } catch (e) {
+            this.doh.error = 'Network error: ' + e.message;
+          } finally {
+            this.doh.loading = false;
+          }
+        },
+
+        async runPublicIp() {
+          this.pip.loading = true;
+          this.pip.ip = '';
+          this.pip.error = '';
+          try {
+            const res = await fetch('/api/tools/public-ip');
+            const data = await res.json();
+            if (!res.ok) {
+              this.pip.error = data.detail || `HTTP ${res.status}`;
+            } else {
+              this.pip.ip = data.ip;
+            }
+          } catch (e) {
+            this.pip.error = 'Network error: ' + e.message;
+          } finally {
+            this.pip.loading = false;
+          }
+        },
+      };
+    }
+  </script>
+</body>
+</html>

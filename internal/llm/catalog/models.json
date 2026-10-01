@@ -1,0 +1,92 @@
+{
+  "models": [
+    {
+      "id": "gemma-4-e2b",
+      "name": "Gemma 4 E2B (instruct)",
+      "description": "Google's edge multimodal model: text + image. ~2B effective parameters, good balance of accuracy and CPU speed. Default.",
+      "repos": ["ggml-org/gemma-4-E2B-it-GGUF", "unsloth/gemma-4-E2B-it-GGUF"],
+      "quant_prefer": ["Q4_K_M", "Q4_K_XL", "Q4_0", "Q5_K_M", "Q8_0"],
+      "vision": true,
+      "approx_size_mb": 2900,
+      "min_ram_mb": 5000,
+      "context": 4096
+    },
+    {
+      "id": "gemma-4-e4b",
+      "name": "Gemma 4 E4B (instruct)",
+      "description": "Larger Gemma 4 edge model: better accuracy, roughly twice the compute of E2B.",
+      "repos": ["ggml-org/gemma-4-E4B-it-GGUF", "unsloth/gemma-4-E4B-it-GGUF"],
+      "quant_prefer": ["Q4_K_M", "Q4_K_XL", "Q4_0", "Q5_K_M", "Q8_0"],
+      "vision": true,
+      "approx_size_mb": 5000,
+      "min_ram_mb": 8000,
+      "context": 4096
+    },
+    {
+      "id": "qwen3.5-2b",
+      "name": "Qwen3.5 2B",
+      "description": "Alibaba's natively multimodal 2B model. Strong vision; image support in llama.cpp, no video.",
+      "repos": ["ggml-org/Qwen3.5-2B-GGUF", "unsloth/Qwen3.5-2B-GGUF", "Qwen/Qwen3.5-2B-GGUF"],
+      "quant_prefer": ["Q4_K_M", "Q4_K_XL", "Q4_0", "Q8_0"],
+      "vision": true,
+      "approx_size_mb": 1800,
+      "min_ram_mb": 4000,
+      "context": 4096
+    },
+    {
+      "id": "qwen3.5-4b",
+      "name": "Qwen3.5 4B",
+      "description": "Larger Qwen3.5; better accuracy at roughly twice the compute of 2B.",
+      "repos": ["ggml-org/Qwen3.5-4B-GGUF", "unsloth/Qwen3.5-4B-GGUF", "Qwen/Qwen3.5-4B-GGUF"],
+      "quant_prefer": ["Q4_K_M", "Q4_K_XL", "Q4_0", "Q8_0"],
+      "vision": true,
+      "approx_size_mb": 3200,
+      "min_ram_mb": 6000,
+      "context": 4096
+    },
+    {
+      "id": "qwen3-vl-2b",
+      "name": "Qwen3-VL 2B (instruct)",
+      "description": "Qwen3 vision-language 2B. Very good at describing images; a solid alternative to Gemma for image verdicts.",
+      "repos": ["ggml-org/Qwen3-VL-2B-Instruct-GGUF", "unsloth/Qwen3-VL-2B-Instruct-GGUF"],
+      "quant_prefer": ["Q4_K_M", "Q8_0"],
+      "vision": true,
+      "approx_size_mb": 1700,
+      "min_ram_mb": 4000,
+      "context": 4096
+    },
+    {
+      "id": "smolvlm-500m",
+      "name": "SmolVLM 500M (instruct)",
+      "description": "Tiny vision model for very low-end hardware. Fast but noticeably less accurate; text verdicts are weak.",
+      "repos": ["ggml-org/SmolVLM-500M-Instruct-GGUF"],
+      "quant_prefer": ["Q8_0", "f16"],
+      "vision": true,
+      "approx_size_mb": 600,
+      "min_ram_mb": 2000,
+      "context": 4096
+    },
+    {
+      "id": "moondream2",
+      "name": "Moondream2",
+      "description": "Compact ~2B vision model. Good image understanding; text classification quality is limited.",
+      "repos": ["ggml-org/moondream2-20250414-GGUF"],
+      "quant_prefer": ["Q8_0", "Q4_K_M", "f16"],
+      "vision": true,
+      "approx_size_mb": 1900,
+      "min_ram_mb": 4000,
+      "context": 2048
+    },
+    {
+      "id": "phi-4-mini",
+      "name": "Phi-4 mini (instruct, text only)",
+      "description": "Microsoft's 3.8B text model. No vision: image verdicts are unavailable with this model.",
+      "repos": ["unsloth/Phi-4-mini-instruct-GGUF", "microsoft/Phi-4-mini-instruct-GGUF"],
+      "quant_prefer": ["Q4_K_M", "Q4_0", "Q8_0"],
+      "vision": false,
+      "approx_size_mb": 2500,
+      "min_ram_mb": 5000,
+      "context": 4096
+    }
+  ]
+}

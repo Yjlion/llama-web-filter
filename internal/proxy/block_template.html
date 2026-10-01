@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}" dir="{{.Dir}}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{.Labels.Title}}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      padding: 48px 56px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+    }
+    .icon {
+      width: 72px;
+      height: 72px;
+      background: #fee2e2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .icon svg { width: 36px; height: 36px; color: #dc2626; }
+    h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .domain { font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 20px; }
+    .reason {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: .9rem;
+      color: #6b7280;
+      margin-bottom: 20px;
+      text-align: start;
+    }
+    .reason strong { color: #374151; }
+    .meta { font-size: .8rem; color: #9ca3af; margin-top: 24px; }
+    .message {
+      font-size: .95rem;
+      color: #4b5563;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+    </div>
+    <h1>{{.Labels.Title}}</h1>
+    <div class="domain">{{.Domain}}</div>
+    <div class="reason">
+      <strong>{{.Labels.Reason}}</strong> {{.Reason}}<br/>
+      <strong>{{.Labels.Filter}}</strong> {{.Component}}
+    </div>
+    {{if .CustomMessage}}
+    <p class="message">{{.CustomMessage}}</p>
+    {{end}}
+    <div class="meta">
+      {{.Labels.Policy}} <strong>{{.PolicyName}}</strong>
+    </div>
+  </div>
+</body>
+</html>

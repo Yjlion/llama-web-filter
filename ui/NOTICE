@@ -1,0 +1,19 @@
+Vendored third-party assets in this directory
+=============================================
+
+These files are committed (rather than loaded from a CDN) so the management
+UI works fully offline — required for the Android app's WebView and useful
+for air-gapped desktop installs.
+
+alpine.min.js
+  Alpine.js v3.15.0 — https://alpinejs.dev
+  Source: npm package `alpinejs` 3.15.0, file `dist/cdn.min.js`
+  License: MIT, Copyright (c) 2019-2021 Caleb Porzio and contributors
+
+qrcode.min.js
+  QRCode.js v1.0.0 — https://github.com/davidshimjs/qrcodejs
+  Source: npm package `qrcodejs` 1.0.0, file `qrcode.min.js`
+  License: MIT, Copyright (c) 2012 davidshimjs
+
+To upgrade, replace the file with the same artifact from the newer npm
+release and update the version noted here.

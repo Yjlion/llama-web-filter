@@ -1,0 +1,58 @@
+{
+  "name": "default-copy",
+  "source_ips": [],
+  "doh": {
+    "enabled": false,
+    "server": "https://1.1.1.3/dns-query",
+    "exclude": [],
+    "include_only": []
+  },
+  "text_classifier": {
+    "enabled": false,
+    "threshold": 0.8,
+    "exclude": [],
+    "include_only": []
+  },
+  "image_classifier": {
+    "enabled": false,
+    "action": "blur",
+    "threshold": 0.75,
+    "exclude": [],
+    "include_only": []
+  },
+  "safesearch": {
+    "enabled": false,
+    "block_images_tab": false,
+    "block_videos_tab": false,
+    "block_ai_tab": false,
+    "exclude": [],
+    "include_only": []
+  },
+  "youtube": {
+    "enabled": false,
+    "mode": "blacklist",
+    "channels": [],
+    "exclude": [],
+    "include_only": [],
+    "block_home": true,
+    "remove_comments": false,
+    "remove_recommendations": false
+  },
+  "mitm": {
+    "mode": "exclude",
+    "sites": [
+      "chase.com"
+    ]
+  },
+  "url_filter": {
+    "enabled": false,
+    "allow": [],
+    "block": [],
+    "mode": "blacklist",
+    "categories": []
+  },
+  "block_page": {
+    "template": "default",
+    "message": "This content has been blocked by your network policy."
+  }
+}

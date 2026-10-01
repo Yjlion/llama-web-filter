@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.dashboard">WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="dashboard()" x-init="init()">
+
+  <!-- Sidebar -->
+  <div class="flex h-screen overflow-hidden">
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.rules">Rules</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+      <div class="px-3 py-4 border-t border-sidebar-border space-y-2">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+        <a href="/api/ca-cert" class="flex items-center gap-2 text-xs text-sidebar-muted hover:text-sidebar-ink transition-colors px-3 py-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span data-i18n="nav.downloadCert">Download CA Cert</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6">
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900" data-i18n="dash.title">Dashboard</h1>
+          <p class="text-sm text-gray-500 mt-1" data-i18n="dash.subtitle">Proxy status and recent activity</p>
+        </div>
+
+        <!-- LLM setup banner -->
+        <div x-show="llm.phase && llm.phase !== 'ready' && llm.phase !== 'unmanaged' && llm.phase !== 'disabled'" x-cloak
+             class="mb-6 rounded-xl border px-5 py-4 text-sm flex items-start justify-between gap-4"
+             :class="llm.phase === 'failed' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-yellow-50 border-yellow-200 text-yellow-900'">
+          <div>
+            <div class="font-semibold" x-text="llm.phase === 'needs_download' ? 'The local model is not installed yet' : (llm.phase === 'downloading' ? 'Downloading the local model…' : (llm.phase === 'starting' ? 'The local model is starting…' : 'The local model is not running'))"></div>
+            <div class="text-xs mt-0.5 opacity-80" x-text="llm.phase === 'needs_download' ? 'Pages and images are not classified until the runtime and model are downloaded (about 3 GB for the default model).' : (llm.last_error || '')"></div>
+          </div>
+          <a href="llm.html" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-card border border-gray-200 text-gray-800 hover:bg-gray-50 whitespace-nowrap">Open LLM page</a>
+        </div>
+
+        <!-- Status cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="dash.proxyStatus">Proxy Status</div>
+            <div class="flex items-center gap-2">
+              <div :class="status.proxy_running ? 'bg-green-500' : 'bg-red-500'" class="w-3 h-3 rounded-full"></div>
+              <span class="text-lg font-semibold" x-text="$t(status.proxy_running ? 'dash.running' : 'dash.stopped')"></span>
+            </div>
+            <div class="text-sm text-gray-500 mt-1" x-text="$t('dash.port') + ' ' + status.proxy_port"></div>
+          </div>
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="dash.policies">Policies</div>
+            <div class="text-2xl font-bold text-gray-900" x-text="policies.length"></div>
+            <div class="text-sm text-gray-500 mt-1" data-i18n="dash.activePolicies">Active policies</div>
+          </div>
+          <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2" data-i18n="dash.blocksRecent">Blocks (recent)</div>
+            <div class="text-2xl font-bold text-gray-900" x-text="status.recent_blocks ? status.recent_blocks.length : 0"></div>
+            <div class="text-sm text-gray-500 mt-1" data-i18n="dash.last50">Last 50 events</div>
+          </div>
+        </div>
+
+        <!-- Policies table -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-8">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-gray-900" data-i18n="dash.policies">Policies</h2>
+            <a href="policy-editor.html?action=new"
+               class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              <span data-i18n="dash.newPolicy">New Policy</span>
+            </a>
+          </div>
+          <div x-show="policies.length === 0" class="px-6 py-10 text-center text-gray-400 text-sm" data-i18n-html="dash.noPolicies">
+            No policies yet. <a href="policy-editor.html?action=new" class="text-blue-600 hover:underline">Create one</a>.
+          </div>
+          <div x-show="policies.length > 0" class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100 text-left">
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.name">Name</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.sourceIps">Source IPs</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" data-i18n="th.activeFilters">Active Filters</th>
+                  <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="policy in policies" :key="policy.name">
+                  <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-3 font-medium text-gray-900" x-text="policy.name"></td>
+                    <td class="px-6 py-3 text-gray-500">
+                      <template x-if="policy.source_ips.length === 0">
+                        <span class="text-gray-400 italic" x-text="$t('common.catchAll')"></span>
+                      </template>
+                      <template x-if="policy.source_ips.length > 0">
+                        <span x-text="policy.source_ips.slice(0,2).join(', ') + (policy.source_ips.length > 2 ? ' +' + (policy.source_ips.length-2) + ' more' : '')"></span>
+                      </template>
+                    </td>
+                    <td class="px-6 py-3">
+                      <div class="flex flex-wrap gap-1">
+                        <template x-if="policy.url_filter.enabled"><span class="badge bg-blue-100 text-blue-700">URL</span></template>
+                        <template x-if="policy.doh.enabled"><span class="badge bg-purple-100 text-purple-700">DOH</span></template>
+                        <template x-if="policy.safesearch.enabled"><span class="badge bg-green-100 text-green-700">SafeSearch</span></template>
+                        <template x-if="policy.youtube.enabled"><span class="badge bg-red-100 text-red-700">YouTube</span></template>
+                        <template x-if="policy.text_classifier.enabled"><span class="badge bg-yellow-100 text-yellow-700">Text</span></template>
+                        <template x-if="policy.image_classifier.enabled"><span class="badge bg-orange-100 text-orange-700">Image</span></template>
+                      </div>
+                    </td>
+                    <td class="px-6 py-3 text-right">
+                      <a :href="'policy-editor.html?name=' + encodeURIComponent(policy.name)"
+                         class="text-blue-600 hover:text-blue-800 mr-3 text-xs font-medium" x-text="$t('common.edit')"></a>
+                      <button @click="deletePolicy(policy.name)"
+                              class="text-red-500 hover:text-red-700 text-xs font-medium" x-text="$t('common.delete')"></button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Activity (tabbed: Recent Blocks / All Requests) -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+          <div class="px-6 pt-3 border-b border-gray-100 flex items-center gap-1">
+            <button @click="tab = 'blocks'"
+                    :class="tab === 'blocks' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors">
+              <span data-i18n="dash.recentBlocks">Recent Blocks</span>
+              <span class="ml-1 text-xs text-gray-400" x-text="'(' + (status.recent_blocks ? status.recent_blocks.length : 0) + ')'"></span>
+            </button>
+            <button @click="tab = 'requests'"
+                    :class="tab === 'requests' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors">
+              <span data-i18n="dash.allRequests">All Requests</span>
+              <span class="ml-1 text-xs text-gray-400" x-text="'(' + (status.recent_requests ? status.recent_requests.length : 0) + ')'"></span>
+            </button>
+          </div>
+
+          <!-- Recent Blocks tab -->
+          <div x-show="tab === 'blocks'">
+            <div x-show="!status.recent_blocks || status.recent_blocks.length === 0"
+                 class="px-6 py-10 text-center text-gray-400 text-sm" data-i18n="dash.noBlocks">No blocks recorded yet.</div>
+            <div x-show="status.recent_blocks && status.recent_blocks.length > 0" class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-gray-100">
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.time">Time</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.domain">Domain</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.filter">Filter</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.policy">Policy</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.client">Client</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(block, i) in status.recent_blocks" :key="i">
+                    <tr class="border-b border-gray-50">
+                      <td class="px-6 py-2 text-gray-400 text-xs" x-text="new Date(block.ts * 1000).toLocaleTimeString()"></td>
+                      <td class="px-6 py-2 font-mono text-xs text-gray-800" x-text="block.domain"></td>
+                      <td class="px-6 py-2"><span class="badge bg-gray-100 text-gray-600" x-text="block.component"></span></td>
+                      <td class="px-6 py-2 text-gray-600" x-text="block.policy"></td>
+                      <td class="px-6 py-2 font-mono text-xs text-gray-500" x-text="block.client_ip"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- All Requests tab -->
+          <div x-show="tab === 'requests'" x-cloak>
+            <div x-show="!status.recent_requests || status.recent_requests.length === 0"
+                 class="px-6 py-10 text-center text-gray-400 text-sm" data-i18n="dash.noRequests">No requests recorded yet.</div>
+            <div x-show="status.recent_requests && status.recent_requests.length > 0" class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-gray-100">
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.time">Time</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.method">Method</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.host">Host</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.path">Path</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.status">Status</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.action">Action</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.client">Client</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left" data-i18n="th.userAgent">User Agent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(req, i) in status.recent_requests" :key="i">
+                    <tr class="border-b border-gray-50" :class="req.action === 'blocked' ? 'bg-red-50/40' : ''">
+                      <td class="px-6 py-2 text-gray-400 text-xs whitespace-nowrap" x-text="new Date(req.ts * 1000).toLocaleTimeString()"></td>
+                      <td class="px-6 py-2 text-gray-500 text-xs font-mono" x-text="req.method"></td>
+                      <td class="px-6 py-2 font-mono text-xs text-gray-800" x-text="req.host"></td>
+                      <td class="px-6 py-2 font-mono text-xs text-gray-500 max-w-xs truncate" :title="req.path" x-text="req.path"></td>
+                      <td class="px-6 py-2 text-xs"><span x-text="req.status || '—'"
+                          :class="req.status >= 400 ? 'text-red-600' : req.status >= 300 ? 'text-amber-600' : 'text-gray-600'"></span></td>
+                      <td class="px-6 py-2">
+                        <span class="badge"
+                              :class="req.action === 'blocked' ? 'bg-red-100 text-red-700' : req.action === 'modified' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'"
+                              x-text="req.action === 'ok' ? $t('action.allowed') : $t('action.' + req.action, req.action)"></span>
+                        <span x-show="req.component" class="ml-1 text-xs text-gray-400" x-text="req.component"></span>
+                      </td>
+                      <td class="px-6 py-2 font-mono text-xs text-gray-500" x-text="req.client_ip"></td>
+                      <td class="px-6 py-2 font-mono text-xs text-gray-400 max-w-xs truncate" :title="req.user_agent" x-text="req.user_agent || '—'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function dashboard() {
+      return {
+        status: { proxy_running: false, proxy_port: 8080, recent_blocks: [], recent_requests: [] },
+        llm: {},
+        policies: [],
+        tab: 'blocks',
+
+        async init() {
+          await this.refresh();
+          setInterval(() => this.refresh(), 15000);
+        },
+
+        async refreshLLM() {
+          try {
+            const r = await fetch('/api/llm/status');
+            if (r.ok) this.llm = await r.json();
+          } catch (e) {}
+        },
+
+        async refresh() {
+          this.refreshLLM();
+          try {
+            const [statusRes, policiesRes] = await Promise.all([
+              fetch('/api/status').then(r => r.json()),
+              fetch('/api/policies').then(r => r.json()),
+            ]);
+            this.status = statusRes;
+            this.policies = policiesRes;
+          } catch (e) {
+            console.error('Refresh failed', e);
+          }
+        },
+
+        async deletePolicy(name) {
+          if (!confirm(window.wfT('pol.confirmDelete').replace('{name}', name))) return;
+          await fetch(`/api/policies/${encodeURIComponent(name)}`, { method: 'DELETE' });
+          await this.refresh();
+        },
+      };
+    }
+  </script>
+</body>
+</html>
