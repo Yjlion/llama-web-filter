@@ -36,15 +36,19 @@ RUN go build -trimpath \
 # ---------------------------------------------------------------------------
 # Runtime stage
 # ---------------------------------------------------------------------------
-FROM alpine:3.24
+FROM debian:bookworm-slim
 
-# ca-certificates is not optional: the engine fetches upstream sites over TLS
-# and verifies them against the system root store. On a `scratch`/rootless
-# image with no roots, every https:// fetch through the proxy fails.
-# wget (busybox) is what HEALTHCHECK below uses.
-RUN apk add --no-cache ca-certificates tzdata \
- && addgroup -S -g 1000 webfilter \
- && adduser -S -u 1000 -G webfilter -h /data webfilter
+# The prebuilt llama.cpp runtime the filter downloads on first run is a
+# glibc build linked against libstdc++, OpenMP and OpenSSL 3, which is why
+# the runtime image is Debian rather than Alpine (musl cannot load it).
+# ca-certificates is not optional: the engine fetches upstream sites over
+# TLS and verifies them against the system root store. wget is what
+# HEALTHCHECK below uses.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates tzdata wget libgomp1 libstdc++6 libssl3 \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd -g 1000 webfilter \
+ && useradd -u 1000 -g webfilter -d /data -M webfilter
 
 COPY --from=build /out/webfilter /usr/local/bin/webfilter
 
@@ -57,6 +61,11 @@ USER webfilter
 WORKDIR /data
 VOLUME ["/data"]
 
+# The llama.cpp runtime, the model (about 3 GB for the default Gemma 4 E2B)
+# and the decision cache live under /data/data/llm, so keep /data on a
+# volume. Run `docker compose exec webfilter webfilter llm download` once,
+# or use the LLM page in the UI.
+#
 # 8080 HTTP(S) forward proxy, 1080 SOCKS5, 8000 management UI + API.
 # Note the bootstrap settings bind SOCKS5 to `socks5@127.0.0.1:1080` - i.e.
 # loopback inside the container - so publishing 1080 does nothing until that

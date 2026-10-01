@@ -29,5 +29,27 @@
     "max_body_bytes": 8388608,
     "normalize_accept_encoding": true,
     "trust_client_ip_header": true
-  }
+  },
+  "llm": {
+    "enabled": true,
+    "data_dir": "./data/llm",
+    "model": "gemma-4-e2b",
+    "accel": "auto",
+    "threads": 0,
+    "gpu_layers": 99,
+    "parallel_slots": 4,
+    "context_size": 4096,
+    "max_image_px": 384,
+    "port": 0,
+    "external_url": "",
+    "extra_args": [],
+    "budget": {
+      "image_ms": 1500,
+      "text_ms": 2000,
+      "host_ms": 500,
+      "compile_ms": 60000
+    }
+  },
+  "adblock_dir": "./data/adblock",
+  "adblock_sources": []
 }

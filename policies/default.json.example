@@ -11,14 +11,22 @@
     "enabled": false,
     "threshold": 0.8,
     "exclude": [],
-    "include_only": []
+    "include_only": [],
+    "on_timeout": "allow",
+    "on_unavailable": "allow",
+    "budget_ms": 0
   },
   "image_classifier": {
     "enabled": false,
     "action": "blur",
-    "threshold": 0.75,
+    "threshold": 0.4,
     "exclude": [],
-    "include_only": []
+    "include_only": [],
+    "min_dimension": 100,
+    "on_timeout": "blur",
+    "on_unavailable": "allow",
+    "budget_ms": 0,
+    "prefetch": true
   },
   "safesearch": {
     "enabled": false,
@@ -55,5 +63,12 @@
   "block_page": {
     "template": "default",
     "message": "This content has been blocked by your network policy."
+  },
+  "adblock": {
+    "enabled": false,
+    "cosmetic": true,
+    "classify_unknown_hosts": true,
+    "exclude": [],
+    "include_only": []
   }
 }

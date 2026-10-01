@@ -1,0 +1,59 @@
+# GoReleaser configuration: one static binary per platform, packaged with
+# the example settings and policy. The llama.cpp runtime and the model are
+# downloaded on first run (`webfilter setup`), not bundled, so the archives
+# stay small.
+version: 2
+
+project_name: webfilter
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: webfilter
+    main: ./cmd/webfilter
+    binary: webfilter
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/yjlion/llama-web-filter/internal/version.Version={{ .Version }}
+      - -X github.com/yjlion/llama-web-filter/internal/version.Commit={{ .ShortCommit }}
+      - -X github.com/yjlion/llama-web-filter/internal/version.BuildDate={{ .Date }}
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+      - docs/install.md
+      - docs/llm.md
+      - docs/policies.md
+      - src: config/settings.example.json
+        dst: config/settings.example.json
+      - src: policies/default.json.example
+        dst: policies/default.json.example
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  draft: false
+  prerelease: auto

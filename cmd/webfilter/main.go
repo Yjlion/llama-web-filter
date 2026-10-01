@@ -28,6 +28,7 @@ func main() {
 
 	root.AddCommand(
 		newRunCmd(),
+		newSetupCmd(),
 		newProxyCmd(),
 		newMgmtCmd(),
 		newLLMCmd(),

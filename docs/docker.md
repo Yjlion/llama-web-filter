@@ -1,8 +1,11 @@
 # Running WebFilter in a container
 
-The binary is static — `CGO_ENABLED=0`, pure-Go SQLite, pure-Go NSFW
-classifiers with embedded models — so the image is a small Alpine layer with
-one executable in it. No ONNX runtime, no Python, no model downloads.
+The binary is static (`CGO_ENABLED=0`, pure-Go SQLite), so the image is a
+small Debian layer with one executable in it. Debian rather than Alpine
+because the prebuilt llama.cpp runtime the filter downloads on first run
+needs glibc, libstdc++, OpenMP and OpenSSL 3. The runtime (~16 MB) and the
+model (~3 GB for the default Gemma 4 E2B) are fetched into the `/data`
+volume on first use; see [llm.md](llm.md).
 
 The [`Dockerfile`](../Dockerfile) and [`docker-compose.yml`](../docker-compose.yml)
 at the repo root are examples meant to be read and adapted, not a

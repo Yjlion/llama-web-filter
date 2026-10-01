@@ -82,6 +82,17 @@
           <p class="text-sm text-gray-500 mt-1" data-i18n="dash.subtitle">Proxy status and recent activity</p>
         </div>
 
+        <!-- LLM setup banner -->
+        <div x-show="llm.phase && llm.phase !== 'ready' && llm.phase !== 'unmanaged' && llm.phase !== 'disabled'" x-cloak
+             class="mb-6 rounded-xl border px-5 py-4 text-sm flex items-start justify-between gap-4"
+             :class="llm.phase === 'failed' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-yellow-50 border-yellow-200 text-yellow-900'">
+          <div>
+            <div class="font-semibold" x-text="llm.phase === 'needs_download' ? 'The local model is not installed yet' : (llm.phase === 'downloading' ? 'Downloading the local model…' : (llm.phase === 'starting' ? 'The local model is starting…' : 'The local model is not running'))"></div>
+            <div class="text-xs mt-0.5 opacity-80" x-text="llm.phase === 'needs_download' ? 'Pages and images are not classified until the runtime and model are downloaded (about 3 GB for the default model).' : (llm.last_error || '')"></div>
+          </div>
+          <a href="llm.html" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-card border border-gray-200 text-gray-800 hover:bg-gray-50 whitespace-nowrap">Open LLM page</a>
+        </div>
+
         <!-- Status cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div class="bg-card rounded-xl shadow-sm p-5 border border-gray-100">
@@ -259,6 +270,7 @@
     function dashboard() {
       return {
         status: { proxy_running: false, proxy_port: 8080, recent_blocks: [], recent_requests: [] },
+        llm: {},
         policies: [],
         tab: 'blocks',
 
@@ -267,7 +279,15 @@
           setInterval(() => this.refresh(), 15000);
         },
 
+        async refreshLLM() {
+          try {
+            const r = await fetch('/api/llm/status');
+            if (r.ok) this.llm = await r.json();
+          } catch (e) {}
+        },
+
         async refresh() {
+          this.refreshLLM();
           try {
             const [statusRes, policiesRes] = await Promise.all([
               fetch('/api/status').then(r => r.json()),
