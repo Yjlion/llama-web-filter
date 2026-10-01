@@ -54,39 +54,6 @@
       "approx_size_mb": 1700,
       "min_ram_mb": 4000,
       "context": 4096
-    },
-    {
-      "id": "smolvlm-500m",
-      "name": "SmolVLM 500M (instruct)",
-      "description": "Tiny vision model for very low-end hardware. Fast but noticeably less accurate; text verdicts are weak.",
-      "repos": ["ggml-org/SmolVLM-500M-Instruct-GGUF"],
-      "quant_prefer": ["Q8_0", "f16"],
-      "vision": true,
-      "approx_size_mb": 600,
-      "min_ram_mb": 2000,
-      "context": 4096
-    },
-    {
-      "id": "moondream2",
-      "name": "Moondream2",
-      "description": "Compact ~2B vision model. Good image understanding; text classification quality is limited.",
-      "repos": ["ggml-org/moondream2-20250414-GGUF"],
-      "quant_prefer": ["Q8_0", "Q4_K_M", "f16"],
-      "vision": true,
-      "approx_size_mb": 1900,
-      "min_ram_mb": 4000,
-      "context": 2048
-    },
-    {
-      "id": "phi-4-mini",
-      "name": "Phi-4 mini (instruct, text only)",
-      "description": "Microsoft's 3.8B text model. No vision: image verdicts are unavailable with this model.",
-      "repos": ["unsloth/Phi-4-mini-instruct-GGUF", "microsoft/Phi-4-mini-instruct-GGUF"],
-      "quant_prefer": ["Q4_K_M", "Q4_0", "Q8_0"],
-      "vision": false,
-      "approx_size_mb": 2500,
-      "min_ram_mb": 5000,
-      "context": 4096
     }
   ]
 }

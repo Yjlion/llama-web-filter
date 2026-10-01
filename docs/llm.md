@@ -37,9 +37,6 @@ speaks the OpenAI chat API with image parts), set `llm.external_url`, e.g.
 | `gemma-4-e4b` | Gemma 4 E4B instruct | yes | ~5 GB | More accurate, about twice the compute. |
 | `qwen3.5-2b` / `qwen3.5-4b` | Qwen3.5 | yes | 1.8 / 3.2 GB | Strong vision. |
 | `qwen3-vl-2b` | Qwen3-VL 2B | yes | ~1.7 GB | Very good image descriptions. |
-| `smolvlm-500m` | SmolVLM 500M | yes | ~0.6 GB | Very low-end hardware; weaker text verdicts. |
-| `moondream2` | Moondream2 | yes | ~1.9 GB | Compact vision model. |
-| `phi-4-mini` | Phi-4 mini | no | ~2.5 GB | Text only: images are not classified. |
 
 Models are fetched from Hugging Face (`HF_ENDPOINT` and `HF_TOKEN` are
 honoured for mirrors and gated repositories). The exact GGUF file is chosen
