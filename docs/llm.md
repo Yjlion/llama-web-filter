@@ -62,11 +62,21 @@ request ──► decision cache (SQLite + in-memory LRU)  ──hit──► ac
              budget elapsed ────────────┴──► policy on_timeout action; verdict still cached
 ```
 
+* **Verdicts are one-word answers.** The model is asked a yes/no question
+  (is this image explicit? is this page adult? is this host an ad server?)
+  and answers in a single token; the score is the probability it gave
+  "yes", read from llama-server's logprobs. A site's category is the bare
+  slug, two or three tokens. Generating a JSON object instead takes 30–100
+  tokens, which on a small CPU is 0.2–0.5 s each. A server that returns no
+  logprobs is read from its plain answer, and one that answers neither yes
+  nor no is asked again with the older JSON prompt.
 * **Images** are keyed by exact hash and by a perceptual hash, so the same
   picture at another size or encoding is answered from cache. They are
   downscaled to `llm.max_image_px` (384 px) before the model sees them.
 * **Pages** are keyed by a hash of the extracted text (title, description,
-  headings, first 3 KB of visible text).
+  headings, first 3 KB of visible text). The model is shown the title and
+  the first 1000 characters, since prompt tokens cost about 30 ms each on a
+  small CPU.
 * **Sites** are learned: after three adult verdicts on one registrable
   domain the whole site is treated as adult without further model calls.
 * **Site categories** are keyed by registrable domain (`www.amazon.co.uk`
@@ -96,15 +106,22 @@ overridden, and in `/metrics` (`webfilter_llm_*`, `webfilter_verdict_*`).
 
 | Setting | Effect |
 |---|---|
-| `llm.parallel_slots` | concurrent model calls (llama-server `-np`). 4 by default; raise on a GPU. |
+| `llm.parallel_slots` | concurrent model calls (llama-server `-np`). 0 (default) picks 2 on a CPU build and 4 on a GPU. On a CPU, extra slots share the same cores, so each verdict gets slower; two stop a long assistant reply from holding up every verdict. |
 | `llm.threads` | CPU threads; 0 lets llama-server choose. |
 | `llm.context_size` | per-slot context (llama-server gets this × `parallel_slots`); 4096 is enough for the prompts used. |
 | `llm.max_image_px` | image downscale target; smaller is faster, 256 is still usable. |
+| `llm.image_max_tokens` | cap on the tokens the vision encoder makes of one image (llama-server `--image-max-tokens`). 0 (default) uses 70 on a CPU build and the model's own default on a GPU. |
 | `llm.extra_args` | extra llama-server flags, for example `["--flash-attn", "on"]`. |
 
-Rough CPU numbers with Gemma 4 E2B Q4_K_M on 8 modern cores: a page verdict
-takes 0.5–1.5 s, an image verdict 1–3 s; a cache hit takes microseconds. On
-a mid-range GPU both are a few hundred milliseconds.
+Rough CPU numbers with Gemma 4 E2B Q4_0 on 3 server cores (no GPU), new
+content each time: a site category takes about 1 s, a host about 1 s, a page
+6–10 s and an image 7–9 s. Most of that is processing the prompt and the
+image, not generating the answer. Before verdicts were one-word answers the
+same machine took 2.5–20 s, 5–10 s, 26–31 s and 7–25 s. When a slot has to
+re-read a kind of prompt it no longer holds, that verdict pays a few extra
+seconds once. 8 modern cores are roughly three times faster, and a
+mid-range GPU answers in a few hundred milliseconds. A cache hit takes
+microseconds.
 
 ## Command line
 

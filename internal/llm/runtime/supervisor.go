@@ -26,8 +26,10 @@ type Spec struct {
 	GPULayers int
 	Slots     int
 	Context   int // per slot
-	ExtraArgs []string
-	LogPath   string
+	// ImageMaxTokens caps the tokens per image (0 = the model's default).
+	ImageMaxTokens int
+	ExtraArgs      []string
+	LogPath        string
 }
 
 // State is the supervisor's lifecycle state.
@@ -142,6 +144,9 @@ func (s Spec) serverArgs(port int) []string {
 	}
 	if s.MMProj != "" {
 		args = append(args, "--mmproj", s.MMProj)
+		if s.ImageMaxTokens > 0 {
+			args = append(args, "--image-max-tokens", strconv.Itoa(s.ImageMaxTokens))
+		}
 	}
 	if s.Threads > 0 {
 		args = append(args, "-t", strconv.Itoa(s.Threads))

@@ -88,6 +88,25 @@ func (s *Service) Config() models.LLMConfig { return s.cfg }
 // Model is the configured catalog entry.
 func (s *Service) Model() catalog.Model { return s.model }
 
+// cpuImageMaxTokens is the image-token cap on CPU builds. The vision
+// encoder dominates an image verdict there, and 70 tokens (Gemma 4's
+// smallest budget) is enough to tell whether a picture is explicit.
+const cpuImageMaxTokens = 70
+
+// Slots is the number of parallel model calls: the configured value, or
+// for 0 one that suits the build. On a CPU every slot shares the same cores,
+// so more slots make each verdict slower without adding throughput; two
+// keep a long assistant reply from holding up every verdict.
+func (s *Service) Slots() int {
+	if s.cfg.ParallelSlots > 0 {
+		return s.cfg.ParallelSlots
+	}
+	if s.cfg.ExternalURL == "" && s.accel == runtime.AccelCPU {
+		return 2
+	}
+	return 4
+}
+
 // Accel is the resolved build flavour.
 func (s *Service) Accel() runtime.Accel { return s.accel }
 
@@ -160,16 +179,16 @@ func (s *Service) spawn(ctx context.Context) error {
 		Port:      s.cfg.Port,
 		Threads:   s.cfg.Threads,
 		GPULayers: s.cfg.GPULayers,
-		Slots:     s.cfg.ParallelSlots,
+		Slots:     s.Slots(),
 		Context:   s.cfg.ContextSize,
 		ExtraArgs: s.cfg.ExtraArgs,
 		LogPath:   filepath.Join(s.cfg.DataDir, "llama-server.log"),
 	}
+	if spec.ImageMaxTokens = s.cfg.ImageMaxTokens; spec.ImageMaxTokens == 0 && s.accel == runtime.AccelCPU {
+		spec.ImageMaxTokens = cpuImageMaxTokens
+	}
 	if inst.MMProjFile != "" {
 		spec.MMProj = filepath.Join(dir, inst.MMProjFile)
-	}
-	if s.accel == runtime.AccelCPU || s.accel == runtime.AccelMetal {
-		// nothing to offload on CPU; Metal offloads by default
 	}
 	sup := runtime.New(spec)
 	s.sup = sup

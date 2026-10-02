@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -71,6 +72,12 @@ type Request struct {
 	SchemaName  string
 	MaxTokens   int
 	Temperature float64
+	// TopLogprobs, when set, asks for the probabilities of that many
+	// candidates for each generated token (Response.Top holds the first
+	// token's). One-word classifiers read their answer from them.
+	TopLogprobs int
+	// Stop ends the reply at any of these strings.
+	Stop []string
 }
 
 // Response is the first choice's content plus usage, which the status page
@@ -80,6 +87,13 @@ type Response struct {
 	PromptTokens     int
 	CompletionTokens int
 	Elapsed          time.Duration
+	// Top maps the first generated token's candidates to probabilities;
+	// nil when TopLogprobs was not asked for or the server does not
+	// support logprobs.
+	Top map[string]float64
+	// FirstProb is the probability of the first token actually generated
+	// (0 without logprobs).
+	FirstProb float64
 }
 
 type wireRequest struct {
@@ -90,6 +104,9 @@ type wireRequest struct {
 	Stream         bool      `json:"stream"`
 	ResponseFormat any       `json:"response_format,omitempty"`
 	CachePrompt    bool      `json:"cache_prompt"`
+	Logprobs       bool      `json:"logprobs,omitempty"`
+	TopLogprobs    int       `json:"top_logprobs,omitempty"`
+	Stop           []string  `json:"stop,omitempty"`
 	// ChatTemplateKwargs turns off "thinking" in models whose chat template
 	// has it on by default (Gemma 4, Qwen3.5). Otherwise llama-server routes
 	// the reasoning to reasoning_content, the token budget runs out before
@@ -104,6 +121,16 @@ type wireResponse struct {
 			Content string `json:"content"`
 		} `json:"message"`
 		FinishReason string `json:"finish_reason"`
+		Logprobs     *struct {
+			Content []struct {
+				Token       string  `json:"token"`
+				Logprob     float64 `json:"logprob"`
+				TopLogprobs []struct {
+					Token   string  `json:"token"`
+					Logprob float64 `json:"logprob"`
+				} `json:"top_logprobs"`
+			} `json:"content"`
+		} `json:"logprobs"`
 	} `json:"choices"`
 	Usage struct {
 		PromptTokens     int `json:"prompt_tokens"`
@@ -127,6 +154,9 @@ func (c *Client) Chat(ctx context.Context, req Request) (Response, error) {
 		Temperature:        req.Temperature,
 		CachePrompt:        true,
 		ChatTemplateKwargs: map[string]any{"enable_thinking": false},
+		Logprobs:           req.TopLogprobs > 0,
+		TopLogprobs:        req.TopLogprobs,
+		Stop:               req.Stop,
 	}
 	if wr.MaxTokens == 0 {
 		wr.MaxTokens = 256
@@ -185,6 +215,14 @@ func (c *Client) Chat(ctx context.Context, req Request) (Response, error) {
 		PromptTokens:     wres.Usage.PromptTokens,
 		CompletionTokens: wres.Usage.CompletionTokens,
 		Elapsed:          time.Since(started),
+	}
+	if lp := wres.Choices[0].Logprobs; lp != nil && len(lp.Content) > 0 {
+		first := lp.Content[0]
+		res.FirstProb = math.Exp(first.Logprob)
+		res.Top = make(map[string]float64, len(first.TopLogprobs))
+		for _, t := range first.TopLogprobs {
+			res.Top[t.Token] += math.Exp(t.Logprob)
+		}
 	}
 	if req.Schema != nil && wres.Choices[0].FinishReason == "length" {
 		// A structured reply cut off at the token limit cannot parse; say
