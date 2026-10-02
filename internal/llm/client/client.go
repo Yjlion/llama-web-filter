@@ -207,9 +207,38 @@ func (c *Client) ChatJSON(ctx context.Context, req Request, out any) (Response, 
 	content = strings.TrimPrefix(content, "```")
 	content = strings.TrimSuffix(content, "```")
 	if err := json.Unmarshal([]byte(strings.TrimSpace(content)), out); err != nil {
-		return res, fmt.Errorf("llm: reply is not the expected JSON: %w (%s)", err, truncate(content, 200))
+		return res, fmt.Errorf("%w: %w (%s)", ErrBadReply, err, truncate(content, 200))
 	}
 	return res, nil
+}
+
+// ErrBadReply marks a reply that is not the JSON object asked for.
+var ErrBadReply = errors.New("llm: reply is not the expected JSON")
+
+// decodeStrict decodes the first JSON object in content into out, rejecting
+// keys out does not have and requiring every key in required. It is the
+// check that stands in for the grammar when a request is sent without one.
+func decodeStrict(content string, required []string, out any) error {
+	i, j := strings.Index(content, "{"), strings.LastIndex(content, "}")
+	if i < 0 || j < i {
+		return fmt.Errorf("%w: no JSON object (%s)", ErrBadReply, truncate(content, 200))
+	}
+	obj := content[i : j+1]
+	var keys map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(obj), &keys); err != nil {
+		return fmt.Errorf("%w: %w (%s)", ErrBadReply, err, truncate(obj, 200))
+	}
+	for _, k := range required {
+		if _, ok := keys[k]; !ok {
+			return fmt.Errorf("%w: missing %q (%s)", ErrBadReply, k, truncate(obj, 200))
+		}
+	}
+	dec := json.NewDecoder(strings.NewReader(obj))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(out); err != nil {
+		return fmt.Errorf("%w: %w (%s)", ErrBadReply, err, truncate(obj, 200))
+	}
+	return nil
 }
 
 // Healthy reports whether the server answers /health with 200.

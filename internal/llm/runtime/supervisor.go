@@ -25,7 +25,7 @@ type Spec struct {
 	Threads   int
 	GPULayers int
 	Slots     int
-	Context   int
+	Context   int // per slot
 	ExtraArgs []string
 	LogPath   string
 }
@@ -122,6 +122,33 @@ func (s *Supervisor) Start(ctx context.Context) error {
 	}
 }
 
+// serverArgs builds the llama-server command line. llama-server's -c is the
+// total context, split evenly across the -np slots, so the per-slot Context
+// is multiplied by the slot count; passing it unscaled left each slot a
+// quarter of the intended context and longer page prompts were rejected.
+func (s Spec) serverArgs(port int) []string {
+	slots := max(s.Slots, 1)
+	args := []string{
+		"-m", s.ModelPath,
+		"--host", "127.0.0.1",
+		"--port", strconv.Itoa(port),
+		"-c", strconv.Itoa(max(s.Context, 1024) * slots),
+		"-np", strconv.Itoa(slots),
+		"-ngl", strconv.Itoa(s.GPULayers),
+		"--cache-reuse", "256",
+		"--jinja",
+		"--no-webui",
+		"--metrics",
+	}
+	if s.MMProj != "" {
+		args = append(args, "--mmproj", s.MMProj)
+	}
+	if s.Threads > 0 {
+		args = append(args, "-t", strconv.Itoa(s.Threads))
+	}
+	return append(args, s.ExtraArgs...)
+}
+
 func (s *Supervisor) launch(ctx context.Context) error {
 	port := s.spec.Port
 	if port == 0 {
@@ -131,27 +158,7 @@ func (s *Supervisor) launch(ctx context.Context) error {
 		}
 		port = p
 	}
-	args := []string{
-		"-m", s.spec.ModelPath,
-		"--host", "127.0.0.1",
-		"--port", strconv.Itoa(port),
-		"-c", strconv.Itoa(max(s.spec.Context, 1024)),
-		"-np", strconv.Itoa(max(s.spec.Slots, 1)),
-		"-ngl", strconv.Itoa(s.spec.GPULayers),
-		"--cache-reuse", "256",
-		"--jinja",
-		"--no-webui",
-		"--metrics",
-	}
-	if s.spec.MMProj != "" {
-		args = append(args, "--mmproj", s.spec.MMProj)
-	}
-	if s.spec.Threads > 0 {
-		args = append(args, "-t", strconv.Itoa(s.spec.Threads))
-	}
-	args = append(args, s.spec.ExtraArgs...)
-
-	cmd := exec.Command(s.spec.Server, args...)
+	cmd := exec.Command(s.spec.Server, s.spec.serverArgs(port)...)
 	cmd.Dir = filepath.Dir(s.spec.Server)
 	cmd.Env = append(os.Environ(), "LLAMA_ARG_HOST=127.0.0.1")
 	var logw io.Writer = io.Discard

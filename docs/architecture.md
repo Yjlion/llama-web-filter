@@ -31,7 +31,7 @@ client ──► listeners (HTTP proxy, SOCKS5, transparent, ICAP)
 | `internal/classify/{imageprep,phash,textextract}` | image downscaling, perceptual hashing, HTML text extraction |
 | `internal/llm/runtime` | llama.cpp release download and process supervision |
 | `internal/llm/catalog` | model catalog and Hugging Face downloads |
-| `internal/llm/client` | OpenAI-compatible chat client with JSON-schema verdicts |
+| `internal/llm/client` | OpenAI-compatible chat client; JSON verdicts, grammar-constrained only on retry |
 | `internal/adblock` | EasyList parser, matcher and cosmetic filtering |
 | `internal/mgmtapi` + `ui/` | management REST API and the embedded web UI |
 
