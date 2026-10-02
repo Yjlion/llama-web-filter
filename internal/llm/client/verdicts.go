@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // The system prompts are fixed strings so llama-server's prompt cache
@@ -30,6 +32,21 @@ const hostSystemPrompt = `You are classifying a web hostname for an ad blocker. 
 category is one of: ads, tracking, affiliate, cdn, api, content, other.
 Reply with exactly one line of compact JSON and nothing else:
 {"is_ad_or_tracker":false,"category":"cdn","confidence":0.9}`
+
+// siteSystemPrompt lists the whole taxonomy so the model picks from it; it
+// is built once from internal/sitecat and never changes at runtime.
+var siteSystemPrompt = func() string {
+	var b strings.Builder
+	b.WriteString("You sort websites into categories for a family web filter. You are given a hostname and, when known, the page title and description. Judge what the site is mainly used for, using what you know about well-known sites.\n")
+	b.WriteString("category is exactly one of:\n")
+	for _, c := range sitecat.All() {
+		b.WriteString("- " + c.Slug + ": " + c.Description + "\n")
+	}
+	b.WriteString("Use infrastructure only for hosts people do not visit directly. confidence is 0..1; use a low value when guessing from an unfamiliar name.\n")
+	b.WriteString("Reply with exactly one line of compact JSON and nothing else:\n")
+	b.WriteString(`{"category":"news","confidence":0.9}`)
+	return b.String()
+}()
 
 // classify asks for a verdict without a grammar first. llama-server's
 // JSON-schema grammar costs tens of milliseconds per output token with a
@@ -99,6 +116,22 @@ type HostVerdict struct {
 	IsAdOrTracker bool    `json:"is_ad_or_tracker"`
 	Category      string  `json:"category"`
 	Confidence    float64 `json:"confidence"`
+}
+
+// SiteVerdict is the model's category for a website.
+type SiteVerdict struct {
+	Category   string  `json:"category"`
+	Confidence float64 `json:"confidence"`
+}
+
+var siteSchema = map[string]any{
+	"type": "object",
+	"properties": map[string]any{
+		"category":   map[string]any{"type": "string", "enum": sitecat.Slugs()},
+		"confidence": map[string]any{"type": "number", "minimum": 0, "maximum": 1},
+	},
+	"required":             []string{"category", "confidence"},
+	"additionalProperties": false,
 }
 
 var imageSchema = map[string]any{
@@ -190,6 +223,44 @@ func (c *Client) ClassifyHost(ctx context.Context, host string, samplePaths []st
 		MaxTokens:  48,
 	}, &v)
 	return v, res, err
+}
+
+// ClassifySite asks the model which taxonomy category a website belongs to.
+// title and description are optional page context; with neither the model
+// judges from the hostname (and what it knows about the site).
+func (c *Client) ClassifySite(ctx context.Context, host, title, description string) (SiteVerdict, Response, error) {
+	prompt := "Host: " + host
+	if title = strings.TrimSpace(title); title != "" {
+		prompt += "\nTitle: " + truncate(title, 200)
+	}
+	if description = strings.TrimSpace(description); description != "" {
+		prompt += "\nDescription: " + truncate(description, 300)
+	}
+	req := Request{
+		Messages:   []Message{{Role: "system", Content: siteSystemPrompt}, {Role: "user", Content: prompt}},
+		Schema:     siteSchema,
+		SchemaName: "site_category",
+		MaxTokens:  32,
+	}
+	var v SiteVerdict
+	res, err := c.classify(ctx, req, &v)
+	if err != nil {
+		return v, res, err
+	}
+	if slug := sitecat.Normalize(v.Category); slug != "" {
+		v.Category = slug
+		v.Confidence = clamp(v.Confidence, 0, 1)
+		return v, res, nil
+	}
+	// An off-list category: ask again with the enum enforced by grammar.
+	v = SiteVerdict{}
+	retry, err := c.ChatJSON(ctx, req, &v)
+	retry.Elapsed += res.Elapsed
+	if err == nil && !sitecat.Valid(v.Category) {
+		v.Category = sitecat.Other
+	}
+	v.Confidence = clamp(v.Confidence, 0, 1)
+	return v, retry, err
 }
 
 func clamp(v, lo, hi float64) float64 {

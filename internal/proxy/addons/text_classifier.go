@@ -1,14 +1,15 @@
 package addons
 
 import (
-	"github.com/yjlion/llama-web-filter/internal/classify/textextract"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/yjlion/llama-web-filter/internal/classify/textextract"
 	"github.com/yjlion/llama-web-filter/internal/metrics"
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/proxy"
+	"github.com/yjlion/llama-web-filter/internal/proxy/state"
 )
 
 // TextClassifier detects adult text content via a fast keyword
@@ -85,12 +86,32 @@ func (tc TextClassifier) HandleResponse(fc *proxy.FlowContext) {
 	host := fc.Request.URL.Hostname()
 	url := fc.Request.URL.String()
 
+	var extracted *textextract.Page
+	extract := func() textextract.Page {
+		if extracted == nil {
+			p := textextract.Extract(fc.ResponseBody)
+			extracted = &p
+		}
+		return *extracted
+	}
+
 	// Speculative image pre-scoring is independent of the text verdict: it
 	// only needs the page's image references.
 	if tc.Prefetcher != nil && policy.ImageClassifier.Enabled && policy.ImageClassifier.Prefetch &&
 		imageClassifierShouldFilter(host, url, policy.ImageClassifier) {
-		if page := textextract.Extract(fc.ResponseBody); len(page.ImageURLs) > 0 {
+		if page := extract(); len(page.ImageURLs) > 0 {
 			tc.Prefetcher.Prefetch(fc.Request.URL, page.ImageURLs, prefetchLimit, fc.Request.Header)
+		}
+	}
+
+	// A site the model categorized from its hostname alone, unsure, gets a
+	// second look now that its title is known (background, never waited on).
+	if policy.CategoryFilter.Enabled && fc.WFAction != "blocked" {
+		if cat := fc.Runtime.SiteCategorizer(); cat != nil {
+			page := extract()
+			if page.Title != "" || page.Description != "" {
+				cat.Categorize(fc.Request.Context(), state.CategoryLookup{Host: host, Title: page.Title, Description: page.Description, Enqueue: true})
+			}
 		}
 	}
 
@@ -102,7 +123,7 @@ func (tc TextClassifier) HandleResponse(fc *proxy.FlowContext) {
 		return
 	}
 
-	page := textextract.Extract(fc.ResponseBody)
+	page := extract()
 	text := page.Summary()
 	if keywordScore(page.Title+" "+text) >= 1.0 {
 		metrics.ObserveClassifier("text", time.Now(), metrics.ResultNSFW)

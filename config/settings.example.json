@@ -47,7 +47,8 @@
       "image_ms": 1500,
       "text_ms": 2000,
       "host_ms": 500,
-      "compile_ms": 60000
+      "category_ms": 1500,
+      "compile_ms": 180000
     }
   },
   "adblock_dir": "./data/adblock",

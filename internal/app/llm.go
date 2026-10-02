@@ -18,6 +18,8 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/proxy"
 	"github.com/yjlion/llama-web-filter/internal/proxy/addons"
+	"github.com/yjlion/llama-web-filter/internal/proxy/state"
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // LLMStack is everything the LLM contributes to a running process: the
@@ -74,7 +76,7 @@ func (st *LLMStack) Close() {
 
 // PipelineClassifiers is what BuildProxyEngine wires into the addons.
 func (st *LLMStack) PipelineClassifiers() Classifiers {
-	return Classifiers{Classifier: &pipelineClassifier{vs: st.Verdicts}, Prefetcher: st.Prefetch, Fetcher: st.Prefetch}
+	return Classifiers{Classifier: &pipelineClassifier{vs: st.Verdicts}, Prefetcher: st.Prefetch, Fetcher: st.Prefetch, Sites: st.Verdicts}
 }
 
 // Scanner is the management API's content scanner.
@@ -154,6 +156,44 @@ func (b *llmBackend) Host(ctx context.Context, host string, samplePaths []string
 		score = 1 - v.Confidence
 	}
 	return verdict.Result{Score: score, Adult: v.IsAdOrTracker, Confidence: v.Confidence, Detail: v.Category}, nil
+}
+
+func (b *llmBackend) Site(ctx context.Context, host, title, description string) (verdict.Result, error) {
+	cli := b.svc.Client()
+	if cli == nil {
+		return verdict.Result{}, ErrLLMNotReady
+	}
+	started := time.Now()
+	v, _, err := cli.ClassifySite(ctx, host, title, description)
+	llm.Observe("category", started, err)
+	if err != nil {
+		return verdict.Result{}, err
+	}
+	return verdict.Result{Category: v.Category, Confidence: v.Confidence}, nil
+}
+
+// ---- state.SiteCategorizer over verdict.Service ----
+
+// siteCategorizer answers the pipeline's category questions: the installed
+// domain lists first, then the verdict service (cache, then model).
+type siteCategorizer struct {
+	vs    *verdict.Service
+	lists sitecat.ListMatcher
+}
+
+// NewSiteCategorizer adapts a verdict service and the domain lists to the
+// runtime's categorizer interface. lists may be nil.
+func NewSiteCategorizer(vs *verdict.Service, lists sitecat.ListMatcher) state.SiteCategorizer {
+	return &siteCategorizer{vs: vs, lists: lists}
+}
+
+func (c *siteCategorizer) Categorize(ctx context.Context, q state.CategoryLookup) state.CategoryAnswer {
+	a := c.vs.Category(ctx, verdict.CategoryRequest{
+		Host: q.Host, ListCategory: sitecat.FromLists(c.lists, sitecat.HostOf(q.Host)),
+		Title: q.Title, Description: q.Description, Enqueue: q.Enqueue, Budget: q.Budget,
+	})
+	return state.CategoryAnswer{Category: a.Category, Source: string(a.Source), Confidence: a.Confidence,
+		Known: a.Known && a.Category != "", TimedOut: a.TimedOut, Unavailable: a.Unavailable}
 }
 
 // ---- addons.ContentClassifier over verdict.Service ----
@@ -265,6 +305,9 @@ func (d *decisions) List(kind, query string, limit int) (any, error) {
 }
 func (d *decisions) Override(kind, key string, adult bool, note string) error {
 	return d.vs.Override(verdict.Kind(kind), key, adult, note)
+}
+func (d *decisions) OverrideCategory(key, category, note string) error {
+	return d.vs.OverrideCategory(key, category, note)
 }
 func (d *decisions) Delete(kind, key string) error {
 	return d.vs.Store().Delete(verdict.Kind(kind), key)

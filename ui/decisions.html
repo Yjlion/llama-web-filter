@@ -33,9 +33,9 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           <span data-i18n="nav.policies">Policies</span>
         </a>
-        <a href="rules.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+        <a href="assistant.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
-          <span data-i18n="nav.rules">Rules</span>
+          <span data-i18n="nav.assistant">Assistant</span>
         </a>
         <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -96,7 +96,7 @@
         <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-6">
           <div class="px-6 py-4 border-b border-gray-100">
             <h2 class="text-base font-semibold text-gray-900">Add an override</h2>
-            <p class="text-xs text-gray-400 mt-0.5">A site override applies to every page and image on that registrable domain (e.g. <span class="font-mono">example.com</span>); a host override marks an ad/tracker host.</p>
+            <p class="text-xs text-gray-400 mt-0.5">A site override applies to every page and image on that registrable domain (e.g. <span class="font-mono">example.com</span>); a host override marks an ad/tracker host; a category override sets what kind of site a domain (or one exact host) is.</p>
           </div>
           <div class="px-6 py-4 flex flex-wrap gap-3 items-end">
             <div>
@@ -104,13 +104,20 @@
               <select x-model="ov.kind" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
                 <option value="site">site (domain)</option>
                 <option value="host">host (ad/tracker)</option>
+                <option value="category">category (site type)</option>
               </select>
             </div>
             <div class="flex-1 min-w-48">
               <label class="block text-xs font-medium text-gray-600 mb-1">Domain / host</label>
               <input type="text" x-model="ov.key" placeholder="example.com" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
             </div>
-            <div>
+            <div x-show="ov.kind === 'category'">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+              <select x-model="ov.category" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
+                <template x-for="c in siteCategories" :key="c.slug"><option :value="c.slug" x-text="c.label"></option></template>
+              </select>
+            </div>
+            <div x-show="ov.kind !== 'category'">
               <label class="block text-xs font-medium text-gray-600 mb-1">Verdict</label>
               <select x-model="ov.adult" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-card">
                 <option value="true">adult / block</option>
@@ -134,6 +141,7 @@
               <option value="text">Pages</option>
               <option value="site">Sites</option>
               <option value="host">Hosts</option>
+              <option value="category">Site categories</option>
             </select>
             <input type="text" x-model="filter.q" @keyup.enter="load()" placeholder="Search URL, host or detail…" class="flex-1 min-w-48 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
             <button @click="load()" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50">Search</button>
@@ -159,7 +167,9 @@
                     <td class="px-6 py-2 whitespace-nowrap text-gray-500" x-text="fmtTime(d.created)"></td>
                     <td class="px-3 py-2" x-text="d.kind"></td>
                     <td class="px-3 py-2 whitespace-nowrap">
-                      <span class="badge text-xs px-2 py-0.5 rounded-full" :class="d.adult ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                      <span x-show="d.kind === 'category'" class="badge text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"
+                            x-text="catLabel(d.category) + (d.source === 'llm' ? ' · ' + (d.confidence || 0).toFixed(2) : '')"></span>
+                      <span x-show="d.kind !== 'category'" class="badge text-xs px-2 py-0.5 rounded-full" :class="d.adult ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
                             x-text="(d.adult ? 'adult' : 'clean') + ' · ' + (d.score || 0).toFixed(2)"></span>
                     </td>
                     <td class="px-3 py-2 max-w-xs truncate font-mono text-xs" :title="d.hint || d.key" x-text="d.hint || d.key"></td>
@@ -167,7 +177,7 @@
                     <td class="px-3 py-2" x-text="d.source"></td>
                     <td class="px-3 py-2 text-right" x-text="d.hits"></td>
                     <td class="px-3 py-2 text-right whitespace-nowrap">
-                      <button @click="flip(d)" class="px-2 py-1 text-xs font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50" x-text="d.adult ? 'Mark clean' : 'Mark adult'"></button>
+                      <button x-show="d.kind !== 'category'" @click="flip(d)" class="px-2 py-1 text-xs font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50" x-text="d.adult ? 'Mark clean' : 'Mark adult'"></button>
                       <button @click="del(d)" class="px-2 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">Forget</button>
                     </td>
                   </tr>
@@ -187,9 +197,20 @@
         rows: [],
         stats: null,
         filter: { kind: '', q: '' },
-        ov: { kind: 'site', key: '', adult: 'true', note: '' },
+        ov: { kind: 'site', key: '', adult: 'true', note: '', category: 'shopping' },
+        siteCategories: [],
         alert: '', alertType: 'success',
-        async init() { await this.load(); },
+        async init() {
+          try {
+            const r = await fetch('/api/sitecategories');
+            if (r.ok) this.siteCategories = (await r.json()).categories || [];
+          } catch (e) {}
+          await this.load();
+        },
+        catLabel(slug) {
+          const c = this.siteCategories.find(c => c.slug === slug);
+          return c ? c.label : (slug || '?');
+        },
         tiles() {
           const s = this.stats || { total: 0, by_kind: {}, adult: 0, manual: 0, sites: 0 };
           const k = s.by_kind || {};
@@ -222,7 +243,7 @@
         async override() {
           if (!this.ov.key.trim()) { this.flash('Enter a domain or host.', 'error'); return; }
           try {
-            await this.post('/api/decisions/override', { kind: this.ov.kind, key: this.ov.key.trim().toLowerCase(), adult: this.ov.adult === 'true', note: this.ov.note });
+            await this.post('/api/decisions/override', { kind: this.ov.kind, key: this.ov.key.trim().toLowerCase(), adult: this.ov.adult === 'true', note: this.ov.note, category: this.ov.category });
             this.flash('Override saved.'); this.ov.key = ''; this.ov.note = '';
             await this.load();
           } catch (e) { this.flash(e.message, 'error'); }

@@ -15,10 +15,15 @@ replaces the embedded statistical classifiers with the model, and adds:
   learned.
 - **Ad and tracker removal** with EasyList/EasyPrivacy (snapshot built in,
   updatable), cosmetic hiding, and the model classifying hosts the lists miss.
-- **Rules in plain language** — *Blur all adult images for 10.10.10.10 from
-  10am to 5pm*, *Block ads on lan, except site www.cnn.com* — compiled by the
-  model into structured rules you confirm before saving, with time windows,
-  device names and per-site exceptions.
+- **An assistant you talk to** — *Block shopping and social media for the
+  kids tablet on school nights*, *What would you recommend for a
+  ten-year-old?* — the model answers and proposes changes to your policies,
+  with time windows and device names; you review the before and after and
+  apply what you want.
+- **Site categories judged by the model** — shopping, news, social media,
+  banking, games and 27 more; block some per policy, or allow only some.
+  Installed domain lists answer first, the model categorizes the rest, and
+  each site is decided once.
 - **Real-time** operation: a decision cache, a deduplicating job queue, per
   request wait budgets with policy-chosen fallbacks, image downscaling and
   speculative pre-scoring keep browsing responsive on CPU-only machines.
@@ -39,14 +44,14 @@ a management UI with logs and analytics, PAC distribution, Prometheus metrics.
 ```
 
 Install the CA certificate from **Settings → Certificates** on your devices,
-point them at the proxy (or use `/proxy.pac`), then open **Rules** and type
-what you want. Full steps in [docs/install.md](docs/install.md).
+point them at the proxy (or use `/proxy.pac`), then open **Assistant** and
+type what you want. Full steps in [docs/install.md](docs/install.md).
 
 ## Documentation
 
 - [Installing](docs/install.md) — download, setup, running as a service, where files live
 - [The local model](docs/llm.md) — runtime, models, how classification and caching work, tuning
-- [Policies and rules](docs/policies.md) — writing rules, the rule schema, classifier and ad-block settings
+- [Policies, the assistant and site categories](docs/policies.md) — talking to the assistant, category filtering, classifier and ad-block settings
 - [Architecture](docs/architecture.md) — pipeline and packages
 - [Docker](docs/docker.md), [ICAP with Squid](docs/icap.md), [Metrics](docs/metrics.md)
 
@@ -56,7 +61,8 @@ what you want. Full steps in [docs/install.md](docs/install.md).
 webfilter run            proxy + management UI in one process
 webfilter setup          first-run wizard
 webfilter llm ...        status | models | download | remove | serve | probe
-webfilter rules ...      list | add "<sentence>" | remove
+webfilter assistant "<request>"   ask the model to change the policies
+webfilter rules ...      list | remove   (sentence rules from earlier versions)
 webfilter adblock ...    status | update
 webfilter categories update
 webfilter proxy / mgmt   run the two halves separately

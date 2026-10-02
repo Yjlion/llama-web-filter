@@ -1,6 +1,7 @@
 package mgmtapi
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/neighbors"
 	"github.com/yjlion/llama-web-filter/internal/proxy"
 	"github.com/yjlion/llama-web-filter/internal/proxy/state"
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 func (s *Server) registerPolicySimulatorRoute(r chi.Router) {
@@ -67,7 +69,7 @@ func (s *Server) handlePolicySimulate(w http.ResponseWriter, r *http.Request) {
 	policy := policies[match.PolicyIndex]
 	response["policy"] = policy.Name
 
-	decisions, finalAction := s.simulatePolicyURL(policy, strings.TrimSpace(payload.URL))
+	decisions, finalAction := s.simulatePolicyURL(r.Context(), policy, strings.TrimSpace(payload.URL))
 	response["action"] = finalAction
 	response["decisions"] = decisions
 	writeJSON(w, http.StatusOK, response)
@@ -80,7 +82,7 @@ func scheduleNote(match state.PolicyMatch) string {
 	return "some policies were skipped because their schedules are inactive"
 }
 
-func (s *Server) simulatePolicyURL(policy models.Policy, rawURL string) ([]policySimulateDecision, string) {
+func (s *Server) simulatePolicyURL(ctx context.Context, policy models.Policy, rawURL string) ([]policySimulateDecision, string) {
 	decisions := []policySimulateDecision{}
 	finalAction := "ok"
 	if rawURL == "" {
@@ -106,6 +108,13 @@ func (s *Server) simulatePolicyURL(policy models.Policy, rawURL string) ([]polic
 	if urlDecision.Action == "allowed" {
 		return decisions, "allowed"
 	}
+	if policy.CategoryFilter.Enabled {
+		catDecision := s.simulateCategoryFilter(ctx, policy.CategoryFilter, host)
+		decisions = append(decisions, catDecision)
+		if catDecision.Action == "blocked" {
+			return decisions, "blocked"
+		}
+	}
 
 	if policy.Doh.Enabled {
 		decisions = append(decisions, policySimulateDecision{Component: "doh_filter", Action: "would_inspect", Reason: "DoH filtering is enabled for this policy"})
@@ -123,6 +132,33 @@ func (s *Server) simulatePolicyURL(policy models.Policy, rawURL string) ([]polic
 		decisions = append(decisions, policySimulateDecision{Component: "image_classifier", Action: "would_inspect_response", Reason: "image classifier runs after image or inline-image response content is available"})
 	}
 	return decisions, finalAction
+}
+
+// simulateCategoryFilter answers as a navigation to host would: it may ask
+// the model, waiting a few seconds, since a person is waiting on a tool
+// rather than a browser on a page.
+func (s *Server) simulateCategoryFilter(ctx context.Context, cfg models.CategoryFilterConfig, host string) policySimulateDecision {
+	const component = "category_filter"
+	if s.Sites == nil {
+		return policySimulateDecision{Component: component, Action: "unknown", Reason: "site categories are only available under `webfilter run`"}
+	}
+	ans := s.Sites.Categorize(ctx, state.CategoryLookup{Host: host, Enqueue: true, Budget: 8 * time.Second})
+	if !ans.Known {
+		action, fallback := "unknown", cfg.OnUnavailable
+		reason := "the model is not available"
+		if ans.TimedOut {
+			fallback, reason = cfg.OnTimeout, "the model did not answer in time"
+		}
+		if fallback == models.FallbackBlock {
+			action = "blocked"
+		}
+		return policySimulateDecision{Component: component, Action: action, Reason: reason + "; fallback " + string(fallback)}
+	}
+	label := sitecat.Label(ans.Category) + " (" + ans.Source + ")"
+	if cfg.Blocks(ans.Category) {
+		return policySimulateDecision{Component: component, Action: "blocked", Reason: "site category " + label}
+	}
+	return policySimulateDecision{Component: component, Action: "no_match", Reason: "site category " + label + " is allowed"}
 }
 
 func parseSimulatorURL(rawURL string) (*url.URL, error) {

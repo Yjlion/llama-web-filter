@@ -74,10 +74,13 @@ type LLMConfig struct {
 
 // LLMBudget is the per-kind wait budget, in milliseconds.
 type LLMBudget struct {
-	ImageMs   int `json:"image_ms"`
-	TextMs    int `json:"text_ms"`
-	HostMs    int `json:"host_ms"`
-	CompileMs int `json:"compile_ms"`
+	ImageMs int `json:"image_ms"`
+	TextMs  int `json:"text_ms"`
+	HostMs  int `json:"host_ms"`
+	// CategoryMs is how long a navigation to a not-yet-categorized site
+	// waits for the model's category.
+	CategoryMs int `json:"category_ms"`
+	CompileMs  int `json:"compile_ms"`
 }
 
 // DefaultLLMModel is the catalog id installed when nothing is configured.
@@ -95,7 +98,7 @@ func NewLLMConfig() LLMConfig {
 		ContextSize:   4096,
 		MaxImagePx:    384,
 		ExtraArgs:     []string{},
-		Budget:        LLMBudget{ImageMs: 1500, TextMs: 2000, HostMs: 500, CompileMs: 60000},
+		Budget:        LLMBudget{ImageMs: 1500, TextMs: 2000, HostMs: 500, CategoryMs: 1500, CompileMs: 180000},
 	}
 }
 
@@ -148,6 +151,9 @@ func (c *LLMConfig) UnmarshalJSON(data []byte) error {
 	}
 	if c.Budget.HostMs <= 0 {
 		c.Budget.HostMs = d.HostMs
+	}
+	if c.Budget.CategoryMs <= 0 {
+		c.Budget.CategoryMs = d.CategoryMs
 	}
 	if c.Budget.CompileMs <= 0 {
 		c.Budget.CompileMs = d.CompileMs

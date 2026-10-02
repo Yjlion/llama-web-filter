@@ -80,6 +80,7 @@ func runProxyAndMgmtWith(ctx context.Context, settingsPath string, mgmtSrv *mgmt
 
 	defer mgmtSrv.Logs.Close()
 	mgmtSrv.AdBlock = &app.AdBlockAdapter{Runtime: rt}
+	mgmtSrv.Sites = rt.SiteCategorizer()
 	mgmtSrv.OnCARotated = rt.LeafIssuer.Clear
 	// Both components share this process, so a settings save can reach the
 	// engine directly rather than waiting on the file watcher. The watcher

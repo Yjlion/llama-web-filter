@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/yjlion/llama-web-filter/internal/macutil"
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // ---- DohConfig ----
@@ -447,6 +448,74 @@ func (c *UrlFilterConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, (*urlFilterConfigAlias)(c))
 }
 
+// ---- CategoryFilterConfig ----
+
+// CategoryFilterConfig blocks or allows websites by the category the model
+// (or an installed domain list) gives them - shopping, news, social media,
+// banking and the rest of internal/sitecat.
+type CategoryFilterConfig struct {
+	Enabled bool `json:"enabled"`
+	// Mode "blacklist" blocks the listed categories; "whitelist" allows only
+	// the listed ones (plus infrastructure hosts, or nothing would load).
+	Mode       UrlFilterMode `json:"mode"`
+	Categories []string      `json:"categories"`
+	// OnTimeout applies to a first visit whose category the model has not
+	// decided within the budget: "allow" (default) or "block".
+	OnTimeout FallbackAction `json:"on_timeout"`
+	// OnUnavailable applies when no model can answer: default "allow".
+	OnUnavailable FallbackAction `json:"on_unavailable"`
+	// BudgetMs overrides the global llm.budget.category_ms (0 = global).
+	BudgetMs int `json:"budget_ms"`
+}
+
+func NewCategoryFilterConfig() CategoryFilterConfig {
+	return CategoryFilterConfig{
+		Mode:          UrlFilterModeBlacklist,
+		Categories:    []string{},
+		OnTimeout:     FallbackAllow,
+		OnUnavailable: FallbackAllow,
+	}
+}
+
+type categoryFilterConfigAlias CategoryFilterConfig
+
+func (c *CategoryFilterConfig) UnmarshalJSON(data []byte) error {
+	*c = NewCategoryFilterConfig()
+	if err := json.Unmarshal(data, (*categoryFilterConfigAlias)(c)); err != nil {
+		return err
+	}
+	c.Normalize()
+	return nil
+}
+
+// Normalize canonicalises the mode, fallbacks and category slugs, dropping
+// slugs the taxonomy does not know.
+func (c *CategoryFilterConfig) Normalize() {
+	if c.Mode != UrlFilterModeWhitelist {
+		c.Mode = UrlFilterModeBlacklist
+	}
+	c.OnTimeout = normalizeFallback(c.OnTimeout, FallbackAllow, false)
+	c.OnUnavailable = normalizeFallback(c.OnUnavailable, FallbackAllow, false)
+	if c.BudgetMs < 0 {
+		c.BudgetMs = 0
+	}
+	cats := make([]string, 0, len(c.Categories))
+	for _, raw := range c.Categories {
+		if slug := sitecat.Normalize(raw); slug != "" && !sitecat.Contains(cats, slug) {
+			cats = append(cats, slug)
+		}
+	}
+	c.Categories = cats
+}
+
+// Blocks reports whether a site of category slug is blocked under c.
+func (c CategoryFilterConfig) Blocks(slug string) bool {
+	if c.Mode == UrlFilterModeWhitelist {
+		return slug != sitecat.Infrastructure && !sitecat.Contains(c.Categories, slug)
+	}
+	return sitecat.Contains(c.Categories, slug)
+}
+
 // ---- BlockPageConfig ----
 
 type BlockPageConfig struct {
@@ -500,6 +569,7 @@ type Policy struct {
 	YouTube         YouTubeConfig         `json:"youtube"`
 	Mitm            MitmConfig            `json:"mitm"`
 	UrlFilter       UrlFilterConfig       `json:"url_filter"`
+	CategoryFilter  CategoryFilterConfig  `json:"category_filter"`
 	AdBlock         AdBlockConfig         `json:"adblock"`
 	BlockPage       BlockPageConfig       `json:"block_page"`
 }
@@ -519,6 +589,7 @@ func NewPolicy() Policy {
 		YouTube:         NewYouTubeConfig(),
 		Mitm:            NewMitmConfig(),
 		UrlFilter:       NewUrlFilterConfig(),
+		CategoryFilter:  NewCategoryFilterConfig(),
 		AdBlock:         NewAdBlockConfig(),
 		BlockPage:       NewBlockPageConfig(),
 	}

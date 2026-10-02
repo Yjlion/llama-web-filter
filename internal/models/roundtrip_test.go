@@ -290,3 +290,32 @@ func TestSettingsLegacyProxyPortMigration(t *testing.T) {
 		t.Errorf("MgmtHost = %q, want 127.0.0.1", s.MgmtHost)
 	}
 }
+
+func TestCategoryFilterDefaultsAndNormalize(t *testing.T) {
+	var p models.Policy
+	if err := json.Unmarshal([]byte(`{"name":"x"}`), &p); err != nil {
+		t.Fatal(err)
+	}
+	cf := p.CategoryFilter
+	if cf.Enabled || cf.Mode != models.UrlFilterModeBlacklist || cf.OnTimeout != models.FallbackAllow || cf.Categories == nil {
+		t.Fatalf("defaults = %+v", cf)
+	}
+	if err := json.Unmarshal([]byte(`{"name":"x","category_filter":{"enabled":true,"mode":"whitelist",
+		"categories":["News","social media","bogus","news"],"on_timeout":"blur"}}`), &p); err != nil {
+		t.Fatal(err)
+	}
+	cf = p.CategoryFilter
+	if len(cf.Categories) != 2 || cf.Categories[0] != "news" || cf.Categories[1] != "social_media" {
+		t.Fatalf("categories = %v", cf.Categories)
+	}
+	if cf.OnTimeout != models.FallbackAllow {
+		t.Fatalf("blur is images-only, got %q", cf.OnTimeout)
+	}
+	if cf.Blocks("news") || !cf.Blocks("shopping") || cf.Blocks("infrastructure") {
+		t.Fatal("whitelist Blocks wrong")
+	}
+	cf.Mode = models.UrlFilterModeBlacklist
+	if !cf.Blocks("news") || cf.Blocks("shopping") {
+		t.Fatal("blacklist Blocks wrong")
+	}
+}

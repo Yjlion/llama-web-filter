@@ -17,6 +17,7 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/logstore"
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/policy/rules"
+	"github.com/yjlion/llama-web-filter/internal/proxy/state"
 )
 
 // Server holds everything the API routes need. Settings are cached
@@ -66,14 +67,21 @@ type Server struct {
 	// `run`; nil under standalone `mgmt`.
 	AdBlock AdBlockController
 
-	// Rules is the natural-language rules store (rules.json next to
-	// settings.json). Always set.
+	// Sites categorizes websites (domain lists, then the model) for the
+	// site-category lookup and the policy simulator. Set by `run`; nil
+	// under standalone `mgmt`.
+	Sites state.SiteCategorizer
+
+	// Rules is rules.json next to settings.json: the named devices the
+	// assistant resolves, and sentence rules saved by earlier versions. Always set.
 	Rules *rules.Store
 
-	// LLMClient returns the chat client for rule compilation, or nil when
-	// the model is not ready; the parser fallback is used then. Set by
-	// `run`; nil under standalone `mgmt`.
+	// LLMClient returns the chat client for the policy assistant, or nil
+	// when the model is not ready. Set by `run`; nil under standalone `mgmt`.
 	LLMClient func() *client.Client
+
+	// proposals holds the assistant's unapplied proposals.
+	proposals proposalCache
 
 	// ForcePlaintext makes ServeMgmt ignore mgmt_tls and serve plain HTTP.
 	// Set by the Android path (mobile/): the WebView that renders this UI has
@@ -215,6 +223,8 @@ func (s *Server) Router() *chi.Mux {
 	s.registerAdBlockRoutes(r)
 	s.registerCertsRoutes(r)
 	s.registerCategoriesRoutes(r)
+	s.registerSiteCategoryRoutes(r)
+	s.registerAssistantRoutes(r)
 	s.registerBackupRoutes(r)
 	s.registerToolsRoutes(r)
 	s.registerLogsExportRoute(r)

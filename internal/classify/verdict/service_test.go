@@ -55,6 +55,15 @@ func (f *fakeBackend) Host(ctx context.Context, host string, paths []string) (Re
 	return Result{Score: 0.1, Adult: false, Confidence: 0.9, Detail: "content"}, nil
 }
 
+func (f *fakeBackend) Site(ctx context.Context, host, title, desc string) (Result, error) {
+	f.calls.Add(1)
+	time.Sleep(f.delay)
+	if title != "" {
+		return Result{Category: "news", Confidence: 0.9}, nil
+	}
+	return Result{Category: "shopping", Confidence: 0.5}, nil
+}
+
 func newTestService(t *testing.T, b *fakeBackend) *Service {
 	t.Helper()
 	st, err := OpenMemory()

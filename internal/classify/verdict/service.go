@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"image"
 	"log/slog"
 	"net"
@@ -18,6 +19,7 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/classify/imageprep"
 	"github.com/yjlion/llama-web-filter/internal/classify/phash"
 	"github.com/yjlion/llama-web-filter/internal/metrics"
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // Backend is the model behind the service. The llm package's adapter
@@ -35,6 +37,9 @@ type Backend interface {
 	Text(ctx context.Context, url, title, text string) (Result, error)
 	// Host classifies a hostname as ad/tracker or not.
 	Host(ctx context.Context, host string, samplePaths []string) (Result, error)
+	// Site sorts a website into the sitecat taxonomy (Result.Category).
+	// title and description are optional page context.
+	Site(ctx context.Context, host, title, description string) (Result, error)
 }
 
 // Result is a backend's answer.
@@ -43,6 +48,8 @@ type Result struct {
 	Adult      bool
 	Confidence float64
 	Detail     string
+	// Category is the taxonomy slug, for Site results.
+	Category string
 }
 
 // Answer is what callers get: a decision plus how it was reached.
@@ -189,11 +196,11 @@ func (s *Service) worker() {
 		metrics.VerdictJobDuration.Observe(time.Since(started).Seconds(), string(j.kind))
 		if err == nil {
 			j.answer = Decision{Kind: j.kind, Key: j.key, Score: res.Score, Adult: res.Adult, Source: SourceLLM,
-				Model: s.backend.ModelID(), Detail: res.Detail, Hint: j.hint, Confidence: res.Confidence, Created: time.Now()}
+				Model: s.backend.ModelID(), Detail: res.Detail, Hint: j.hint, Confidence: res.Confidence, Category: res.Category, Created: time.Now()}
 			if perr := s.store.Put(j.answer); perr != nil {
 				slog.Warn("verdict: cache write failed", "err", perr)
 			}
-			if j.kind != KindHost {
+			if j.kind != KindHost && j.kind != KindCategory {
 				s.store.RecordSite(siteOf(j.hint), res.Adult)
 			}
 		} else {
@@ -393,6 +400,104 @@ func (s *Service) Host(ctx context.Context, req HostRequest) Answer {
 		return Answer{Unavailable: true}
 	}
 	return s.wait(ctx, queued, req.Budget)
+}
+
+// CategoryRequest asks for a website's taxonomy category.
+type CategoryRequest struct {
+	// Host is the hostname (or URL) of the site.
+	Host string
+	// ListCategory is the slug the installed domain lists give the host
+	// ("" when none know it). Lists answer before the model.
+	ListCategory string
+	// Title and Description are page context when the caller has it; they
+	// sharpen a verdict the model first made from the hostname alone.
+	Title, Description string
+	// Enqueue asks the model when nothing is known. Without it the lookup
+	// is cache-and-lists only and an unknown site comes back !Known with
+	// neither TimedOut nor Unavailable set.
+	Enqueue bool
+	// Budget is how long to wait for the model (0 = fire and forget).
+	Budget time.Duration
+}
+
+// Detail values for KindCategory rows say what the model was shown.
+const (
+	categoryFromHost = "from hostname"
+	categoryFromPage = "from page title"
+)
+
+// refineBelow is the confidence under which a hostname-only category is
+// asked again once the page's title is known.
+const refineBelow = 0.6
+
+// Category answers which category a website belongs to. Order: a manual
+// override for the exact host, then for its site, then the domain lists,
+// then a cached model verdict, then the model within the budget.
+func (s *Service) Category(ctx context.Context, req CategoryRequest) Answer {
+	host := sitecat.HostOf(req.Host)
+	if host == "" {
+		return Answer{}
+	}
+	site := sitecat.SiteKey(host)
+	if d, ok := s.store.Get(KindCategory, host); ok && d.Source == SourceManual {
+		metrics.VerdictOutcomes.Inc("category", "manual")
+		return Answer{Decision: d, Known: true, Cached: true}
+	}
+	cached, haveCached := s.store.Get(KindCategory, site)
+	if haveCached && cached.Source == SourceManual {
+		metrics.VerdictOutcomes.Inc("category", "manual")
+		return Answer{Decision: cached, Known: true, Cached: true}
+	}
+	if req.ListCategory != "" {
+		metrics.VerdictOutcomes.Inc("category", "list")
+		return Answer{Known: true, Cached: true, Decision: Decision{Kind: KindCategory, Key: site, Category: req.ListCategory,
+			Source: SourceList, Confidence: 1, Hint: host, Created: time.Now()}}
+	}
+	hasPage := strings.TrimSpace(req.Title+req.Description) != ""
+	if haveCached {
+		if hasPage && req.Enqueue && cached.Detail == categoryFromHost && cached.Confidence < refineBelow && s.backend.Ready() {
+			s.enqueueCategory(site, host, req.Title, req.Description, 2)
+		}
+		metrics.VerdictOutcomes.Inc("category", "cache")
+		return Answer{Decision: cached, Known: true, Cached: true}
+	}
+	if !req.Enqueue {
+		return Answer{}
+	}
+	if !s.backend.Ready() {
+		metrics.VerdictOutcomes.Inc("category", "unavailable")
+		return Answer{Unavailable: true}
+	}
+	prio := 2
+	if req.Budget > 0 {
+		prio = 0 // a browser is waiting on this navigation
+	}
+	queued, err := s.enqueueCategory(site, host, req.Title, req.Description, prio)
+	if err != nil {
+		return Answer{Unavailable: true}
+	}
+	return s.wait(ctx, queued, req.Budget)
+}
+
+func (s *Service) enqueueCategory(site, host, title, desc string, prio int) (*job, error) {
+	detail := categoryFromHost
+	if strings.TrimSpace(title+desc) != "" {
+		detail = categoryFromPage
+	}
+	return s.enqueue(&job{kind: KindCategory, key: site, hint: host, priority: prio, run: func(ctx context.Context) (Result, error) {
+		res, err := s.backend.Site(ctx, host, title, desc)
+		res.Detail = detail
+		return res, err
+	}})
+}
+
+// OverrideCategory pins key's category (a site, or an exact host) to slug.
+func (s *Service) OverrideCategory(key, slug, note string) error {
+	if !sitecat.Valid(slug) {
+		return fmt.Errorf("unknown category %q", slug)
+	}
+	return s.store.Put(Decision{Kind: KindCategory, Key: sitecat.HostOf(key), Category: slug, Source: SourceManual,
+		Detail: note, Confidence: 1, Created: time.Now()})
 }
 
 // Override records an operator decision that wins over everything.
