@@ -74,6 +74,16 @@ type Supervisor struct {
 
 // New prepares a supervisor; nothing runs until Start.
 func New(spec Spec) *Supervisor {
+	// launch runs the server from its own directory (so it finds its shared
+	// libraries), which would re-root any relative path - including the one
+	// to the server itself. Resolve them against our working directory now.
+	for _, p := range []*string{&spec.Server, &spec.ModelPath, &spec.MMProj, &spec.LogPath} {
+		if *p != "" && !filepath.IsAbs(*p) {
+			if abs, err := filepath.Abs(*p); err == nil {
+				*p = abs
+			}
+		}
+	}
 	return &Supervisor{spec: spec, state: StateStopped, ready: make(chan struct{})}
 }
 
@@ -226,8 +236,19 @@ func (s *Supervisor) loop(ctx context.Context) {
 				s.state = StateStarting
 				s.mu.Unlock()
 			case <-ctx.Done():
-				s.Stop()
-				<-exited
+				// Not s.Stop(): it waits for this loop to finish, which
+				// would stall shutdown for its full kill timeout.
+				s.mu.Lock()
+				s.stopping = true
+				s.mu.Unlock()
+				_ = terminate(cmd.Process)
+				select {
+				case <-exited:
+				case <-time.After(stopGrace):
+					_ = cmd.Process.Kill()
+					<-exited
+				}
+				s.setState(StateStopped)
 				return
 			}
 		} else {
@@ -260,6 +281,15 @@ func (s *Supervisor) loop(ctx context.Context) {
 			return
 		}
 		backoff = min(backoff*2, time.Minute)
+		// Stop may have run while we waited; launching now would leave a
+		// server nobody stops.
+		s.mu.Lock()
+		stopping := s.stopping
+		s.mu.Unlock()
+		if stopping {
+			s.setState(StateStopped)
+			return
+		}
 		if err := s.launch(ctx); err != nil {
 			s.setFailed(err)
 			return
@@ -312,6 +342,9 @@ func (s *Supervisor) setState(st State) {
 	s.mu.Unlock()
 }
 
+// stopGrace is how long a stopping server gets to exit before it is killed.
+const stopGrace = 10 * time.Second
+
 // Stop terminates the child and waits for the loop to finish.
 func (s *Supervisor) Stop() {
 	s.mu.Lock()
@@ -325,7 +358,7 @@ func (s *Supervisor) Stop() {
 	if done != nil {
 		select {
 		case <-done:
-		case <-time.After(10 * time.Second):
+		case <-time.After(stopGrace):
 			if cmd != nil && cmd.Process != nil {
 				_ = cmd.Process.Kill()
 			}

@@ -43,7 +43,17 @@ func LoadInstalled(dataDir, tag string, accel Accel) (Installed, bool) {
 		return Installed{}, false
 	}
 	if _, err := os.Stat(m.Server); err != nil {
-		return Installed{}, false
+		// The manifest may hold a path that no longer resolves: one recorded
+		// relative to an earlier working directory, or a data dir that was
+		// moved. The binary's place inside the install dir is what counts.
+		server, ok := FindServer(dir)
+		if !ok {
+			return Installed{}, false
+		}
+		m.Server = server
+	}
+	if abs, err := filepath.Abs(m.Server); err == nil {
+		m.Server = abs
 	}
 	return m, true
 }
@@ -87,6 +97,9 @@ func Download(ctx context.Context, dataDir, tag string, accel Accel, report func
 	}
 	if runtime.GOOS != "windows" {
 		_ = os.Chmod(server, 0o755)
+	}
+	if abs, err := filepath.Abs(server); err == nil {
+		server = abs
 	}
 	m := Installed{Tag: tag, Accel: accel, OS: runtime.GOOS, Arch: runtime.GOARCH, Asset: asset.Name, Server: server, Installed: time.Now().UTC()}
 	data, _ := json.MarshalIndent(m, "", "  ")
