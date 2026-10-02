@@ -33,7 +33,7 @@ func fakeServer(t *testing.T, reply string, capture *map[string]any) *httptest.S
 	}))
 }
 
-func TestClassifyImageSendsSchemaAndImagePart(t *testing.T) {
+func TestClassifyImageSendsImagePartWithoutGrammar(t *testing.T) {
 	var got map[string]any
 	ts := fakeServer(t, `{"adult":true,"nudity":3,"violence":0,"is_ad":false,"confidence":0.9,"description":"explicit"}`, &got)
 	defer ts.Close()
@@ -48,9 +48,8 @@ func TestClassifyImageSendsSchemaAndImagePart(t *testing.T) {
 	if res.PromptTokens != 40 || res.CompletionTokens != 12 {
 		t.Errorf("usage not captured: %+v", res)
 	}
-	rf := got["response_format"].(map[string]any)
-	if rf["type"] != "json_schema" {
-		t.Fatalf("response_format = %v", rf)
+	if rf, ok := got["response_format"]; ok {
+		t.Fatalf("a reply that decodes needs no grammar, got response_format = %v", rf)
 	}
 	msgs := got["messages"].([]any)
 	user := msgs[1].(map[string]any)

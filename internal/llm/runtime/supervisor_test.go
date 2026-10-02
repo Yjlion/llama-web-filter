@@ -95,3 +95,27 @@ func TestSupervisorMissingBinary(t *testing.T) {
 	}
 	_ = exec.ErrNotFound
 }
+
+// llama-server divides -c across -np slots; Spec.Context is per slot.
+func TestServerArgsScaleContextBySlots(t *testing.T) {
+	for _, tc := range []struct {
+		ctx, slots int
+		wantC      string
+	}{
+		{4096, 4, "16384"},
+		{4096, 1, "4096"},
+		{512, 2, "2048"}, // per-slot floor of 1024
+		{4096, 0, "4096"},
+	} {
+		args := Spec{ModelPath: "m.gguf", Context: tc.ctx, Slots: tc.slots}.serverArgs(9000)
+		got := ""
+		for i, a := range args {
+			if a == "-c" && i+1 < len(args) {
+				got = args[i+1]
+			}
+		}
+		if got != tc.wantC {
+			t.Errorf("Context=%d Slots=%d: -c %s, want %s (args %v)", tc.ctx, tc.slots, got, tc.wantC, args)
+		}
+	}
+}

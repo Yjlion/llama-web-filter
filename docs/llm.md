@@ -87,7 +87,7 @@ overridden, and in `/metrics` (`webfilter_llm_*`, `webfilter_verdict_*`).
 |---|---|
 | `llm.parallel_slots` | concurrent model calls (llama-server `-np`). 4 by default; raise on a GPU. |
 | `llm.threads` | CPU threads; 0 lets llama-server choose. |
-| `llm.context_size` | per-slot context; 4096 is enough for the prompts used. |
+| `llm.context_size` | per-slot context (llama-server gets this × `parallel_slots`); 4096 is enough for the prompts used. |
 | `llm.max_image_px` | image downscale target; smaller is faster, 256 is still usable. |
 | `llm.extra_args` | extra llama-server flags, for example `["--flash-attn", "on"]`. |
 
