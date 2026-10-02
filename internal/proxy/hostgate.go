@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/metrics"
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/proxy/state"
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // ErrBlockedByPolicy marks a tunnel refused by the connection-level gate
@@ -75,7 +77,7 @@ func CategoryVerdict(cats *categories.Store, host string, cfg models.UrlFilterCo
 //     rule is re-checked directly so a host the addon path would mark
 //     passthrough isn't blocked here instead.
 func HostFilterVerdict(rt *state.Runtime, policy *models.Policy, host string) HostVerdict {
-	if policy == nil || !policy.UrlFilter.Enabled {
+	if policy == nil || (!policy.UrlFilter.Enabled && !policy.CategoryFilter.Enabled) {
 		return HostVerdict{}
 	}
 	// Mirrors MitmControl: in include mode, a non-listed site is passthrough
@@ -85,24 +87,47 @@ func HostFilterVerdict(rt *state.Runtime, policy *models.Policy, host string) Ho
 		return HostVerdict{}
 	}
 
-	cfg := policy.UrlFilter
-	for _, pattern := range cfg.Allow {
-		if isHostPattern(pattern) && HostMatches(host, pattern) {
-			return HostVerdict{}
+	if policy.UrlFilter.Enabled {
+		cfg := policy.UrlFilter
+		for _, pattern := range cfg.Allow {
+			if isHostPattern(pattern) && HostMatches(host, pattern) {
+				return HostVerdict{}
+			}
 		}
-	}
-	for _, pattern := range cfg.Block {
-		if isHostPattern(pattern) && HostMatches(host, pattern) {
-			return HostVerdict{Blocked: true, Reason: "URL blocked by policy", Component: "url_filter"}
+		for _, pattern := range cfg.Block {
+			if isHostPattern(pattern) && HostMatches(host, pattern) {
+				return HostVerdict{Blocked: true, Reason: "URL blocked by policy", Component: "url_filter"}
+			}
 		}
-	}
 
-	var cats *categories.Store
-	if rt != nil {
-		cats = rt.Categories
+		var cats *categories.Store
+		if rt != nil {
+			cats = rt.Categories
+		}
+		if blocked, reason := CategoryVerdict(cats, host, cfg); blocked {
+			return HostVerdict{Blocked: true, Reason: reason, Component: "url_filter"}
+		}
 	}
-	if blocked, reason := CategoryVerdict(cats, host, cfg); blocked {
-		return HostVerdict{Blocked: true, Reason: reason, Component: "url_filter"}
+	return categoryHostVerdict(rt, policy.CategoryFilter, host)
+}
+
+// categoryHostVerdict applies category_filter to a tunnel target. Nothing
+// can wait on the model here (no page exists yet, and the host may be any
+// CDN), so it answers from the domain lists and the cache, and queues the
+// model in the background so the site is known on the next connection.
+// Only block-listed categories are refused: in allow-only mode a tunnel
+// cannot tell a site from the CDN it loads from.
+func categoryHostVerdict(rt *state.Runtime, cfg models.CategoryFilterConfig, host string) HostVerdict {
+	if !cfg.Enabled || cfg.Mode != models.UrlFilterModeBlacklist || len(cfg.Categories) == 0 {
+		return HostVerdict{}
+	}
+	cat := rt.SiteCategorizer()
+	if cat == nil {
+		return HostVerdict{}
+	}
+	ans := cat.Categorize(context.Background(), state.CategoryLookup{Host: host, Enqueue: true})
+	if ans.Known && cfg.Blocks(ans.Category) {
+		return HostVerdict{Blocked: true, Reason: "Site category '" + sitecat.Label(ans.Category) + "' blocked by policy", Component: "category_filter"}
 	}
 	return HostVerdict{}
 }

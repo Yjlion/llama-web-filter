@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.assistant">Assistant — WebFilter Proxy</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <script src="chrome.js"></script>
+  <script src="i18n.js"></script>
+  <script defer src="alpine.min.js"></script>
+</head>
+<body class="bg-canvas min-h-screen" x-data="assistantPage()" x-init="init()">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="wf-sidebar w-56 bg-sidebar text-sidebar-ink flex flex-col flex-shrink-0">
+      <div class="px-6 py-5 border-b border-sidebar-border">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span class="font-bold text-sm">WebFilter Proxy</span>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="policies.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span data-i18n="nav.policies">Policies</span>
+        </a>
+        <a href="assistant.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-active text-sidebar-ink text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+          <span data-i18n="nav.assistant">Assistant</span>
+        </a>
+        <a href="logs.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span data-i18n="nav.logs">Logs</span>
+        </a>
+        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span data-i18n="nav.analytics">Analytics</span>
+        </a>
+        <a href="tools.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+          <span data-i18n="nav.tools">Tools</span>
+        </a>
+        <a href="llm.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+          <span data-i18n="nav.llm">LLM</span>
+        </a>
+        <a href="decisions.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <span data-i18n="nav.decisions">Decisions</span>
+        </a>
+        <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-ink text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </a>
+      </nav>
+
+      <div class="px-3 py-4 border-t border-sidebar-border">
+        <label class="block px-3">
+          <span class="text-xs text-sidebar-muted" data-i18n="lang.label">Language</span>
+          <select class="wf-lang-select mt-1 w-full bg-sidebar-active text-sidebar-ink text-xs rounded px-2 py-1 border border-sidebar-border focus:outline-none"></select>
+        </label>
+      </div>
+    </aside>
+
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto">
+      <div class="px-8 py-6 max-w-5xl">
+        <div class="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Assistant</h1>
+            <p class="text-sm text-gray-500 mt-1">Tell the local model what you want, or ask for advice. It answers, proposes changes to your policies, and nothing changes until you apply them.</p>
+          </div>
+          <span class="badge text-xs px-2 py-0.5 rounded-full whitespace-nowrap" :class="state.llm_ready ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'"
+                x-text="state.llm_ready ? 'model ready' : 'model not running'"></span>
+        </div>
+
+        <div x-show="alert" x-cloak class="mb-4 rounded-lg px-4 py-2 text-sm"
+             :class="alertType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'" x-text="alert"></div>
+
+        <!-- Conversation -->
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 space-y-4" x-ref="log">
+            <div x-show="turns.length === 0" class="text-sm text-gray-500 space-y-2">
+              <p>Try one of these:</p>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="ex in examples" :key="ex">
+                  <button @click="message = ex; ask()" class="text-left text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700" x-text="ex"></button>
+                </template>
+              </div>
+            </div>
+            <template x-for="(t, i) in turns" :key="i">
+              <div>
+                <div x-show="t.role === 'user'" class="flex justify-end">
+                  <div class="max-w-xl rounded-xl px-4 py-2 text-sm bg-blue-600 text-white whitespace-pre-wrap" x-text="t.content"></div>
+                </div>
+                <div x-show="t.role === 'assistant'" class="space-y-3">
+                  <div class="max-w-2xl rounded-xl px-4 py-2 text-sm bg-gray-100 text-gray-900 whitespace-pre-wrap" x-text="t.content"></div>
+                  <!-- Proposal -->
+                  <div x-show="t.changes && t.changes.length" class="max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 space-y-2">
+                    <div class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Proposed changes</div>
+                    <template x-for="(c, ci) in (t.changes || [])" :key="ci">
+                      <label class="flex items-start gap-2 text-sm" :class="c.error ? 'text-gray-400' : 'text-gray-900'">
+                        <input type="checkbox" class="w-4 h-4 mt-0.5 accent-blue-600" :disabled="!!c.error || t.status" :checked="t.selected.includes(ci)"
+                               @change="$event.target.checked ? t.selected.push(ci) : t.selected.splice(t.selected.indexOf(ci), 1)" />
+                        <span class="flex-1">
+                          <span x-text="c.summary"></span>
+                          <span x-show="c.error" class="block text-xs text-red-600" x-text="'Cannot apply: ' + c.error"></span>
+                          <template x-for="w in (c.warnings || [])" :key="w"><span class="block text-xs text-yellow-800" x-text="'Check: ' + w"></span></template>
+                        </span>
+                      </label>
+                    </template>
+                    <details x-show="t.diff && t.diff.length" class="text-xs text-gray-600">
+                      <summary class="cursor-pointer">What changes in each policy</summary>
+                      <template x-for="d in (t.diff || [])" :key="d.policy">
+                        <div class="mt-2">
+                          <div class="font-semibold text-gray-800" x-text="d.policy + (d.created ? ' (new)' : d.deleted ? ' (deleted)' : '')"></div>
+                          <template x-for="f in (d.fields || [])" :key="f.field">
+                            <div class="font-mono pl-2 break-all"><span x-text="f.field"></span>: <span class="text-red-600 line-through" x-show="f.before" x-text="f.before"></span> <span class="text-green-700" x-text="f.after"></span></div>
+                          </template>
+                        </div>
+                      </template>
+                    </details>
+                    <div class="flex items-center gap-2 pt-1" x-show="!t.status">
+                      <button @click="apply(t)" :disabled="!t.selected.length || busy"
+                              class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">Apply selected</button>
+                      <button @click="t.status = 'Discarded.'" class="px-4 py-1.5 text-sm font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50">Discard</button>
+                    </div>
+                    <div x-show="t.status" class="text-xs text-gray-600" x-text="t.status"></div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <div x-show="busy" class="text-sm text-gray-400">Thinking…</div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
+            <textarea x-model="message" @keydown.enter.prevent="if (!$event.shiftKey) ask(); else message += '\n'" rows="2"
+                      placeholder="e.g. Block shopping and social media for the kids tablet on school nights"
+                      class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            <div class="flex flex-col gap-2">
+              <button @click="ask()" :disabled="busy || !message.trim()"
+                      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">Send</button>
+              <button @click="turns = []" x-show="turns.length" class="px-4 py-1 text-xs text-gray-500 hover:text-gray-700">New chat</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Old rules -->
+        <div x-show="state.legacy_rules && state.legacy_rules.length" x-cloak class="bg-card rounded-xl shadow-sm border border-yellow-200 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold text-gray-900">Old rules (still active)</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Sentence rules from an earlier version are still enforced on top of the policies. Convert each into a policy change with the assistant, then remove it.</p>
+          </div>
+          <div class="divide-y divide-gray-100">
+            <template x-for="r in (state.legacy_rules || [])" :key="r.id">
+              <div class="px-6 py-3 flex items-start gap-4">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-900" :class="r.enabled ? '' : 'line-through text-gray-400'" x-text="r.summary"></div>
+                  <div class="text-xs text-gray-400 mt-0.5 truncate" x-text="r.text ? '“' + r.text + '”' : ''"></div>
+                </div>
+                <button @click="message = r.text || r.summary; ask()" class="px-2 py-1 text-xs font-medium text-blue-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50">Convert</button>
+                <button @click="removeRule(r)" class="px-2 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">Remove</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Devices -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900">Device names</h2>
+              <p class="text-xs text-gray-400 mt-0.5">Name devices so you can say “the kids tablet”. One per line: <span class="font-mono">name = 10.0.0.7, aa:bb:cc:dd:ee:ff</span></p>
+            </div>
+            <div class="px-6 py-4 space-y-2">
+              <textarea x-model="devicesText" rows="5" class="w-full border border-gray-200 rounded-lg px-3 py-2 font-mono text-xs" placeholder="kids-tablet = 10.0.0.7&#10;living-room-tv = aa:bb:cc:dd:ee:ff"></textarea>
+              <button @click="saveDevices()" class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save devices</button>
+            </div>
+          </div>
+          <!-- Tester -->
+          <div class="bg-card rounded-xl shadow-sm border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="text-base font-semibold text-gray-900">What applies right now?</h2>
+              <p class="text-xs text-gray-400 mt-0.5">Check which policy a device gets for a site at this moment, including the site's category.</p>
+            </div>
+            <div class="px-6 py-4 space-y-3">
+              <div class="flex flex-wrap gap-2">
+                <input type="text" x-model="test.ip" placeholder="10.0.0.7" class="w-40 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                <input type="text" x-model="test.url" @keyup.enter="evaluate()" placeholder="https://www.example.com/" class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                <button @click="evaluate()" :disabled="test.busy" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-card border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50">Check</button>
+              </div>
+              <div x-show="test.result" x-cloak class="text-sm space-y-1">
+                <div class="text-xs text-gray-500">Policy: <span class="font-mono" x-text="test.result && (test.result.policy || '(none)')"></span> · result: <span class="font-semibold" x-text="test.result && test.result.action"></span></div>
+                <template x-for="(d, i) in (test.result ? test.result.decisions || [] : [])" :key="i">
+                  <div class="text-gray-800">• <span class="font-mono text-xs" x-text="d.component"></span> <span x-text="d.action"></span><span class="text-gray-500" x-show="d.reason" x-text="' — ' + d.reason"></span></div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function assistantPage() {
+      return {
+        state: { llm_ready: false, devices: {}, legacy_rules: [] },
+        turns: [],
+        message: '',
+        busy: false,
+        devicesText: '',
+        test: { ip: '', url: '', result: null, busy: false },
+        alert: '', alertType: 'success',
+        examples: [
+          'Block shopping and social media for the kids tablet on school nights',
+          'What would you recommend for a 10 year old?',
+          'Blur adult images for everyone and block gambling sites',
+          'Block the internet for 10.0.0.7 between 22:00 and 06:00',
+        ],
+        async init() {
+          await this.load();
+          try { this.turns = JSON.parse(sessionStorage.getItem('wf_assistant_turns') || '[]'); } catch (e) { this.turns = []; }
+          this.$watch('turns', v => { try { sessionStorage.setItem('wf_assistant_turns', JSON.stringify(v.slice(-20))); } catch (e) {} });
+        },
+        async load() {
+          try {
+            const r = await fetch('/api/assistant');
+            if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+            this.state = await r.json();
+            this.devicesText = Object.entries(this.state.devices || {}).map(([k, v]) => k + ' = ' + v.join(', ')).join('\n');
+          } catch (e) { this.flash(e.message, 'error'); }
+        },
+        flash(msg, type) {
+          this.alert = msg; this.alertType = type || 'success';
+          clearTimeout(this._t); this._t = setTimeout(() => this.alert = '', 6000);
+        },
+        history() {
+          return this.turns.slice(-6).map(t => ({ role: t.role, content: t.content }));
+        },
+        scroll() { this.$nextTick(() => { const m = document.querySelector('main'); m.scrollTop = this.$refs.log.offsetTop + this.$refs.log.scrollHeight - m.clientHeight + 140; }); },
+        async ask() {
+          const text = this.message.trim();
+          if (!text || this.busy) return;
+          const history = this.history();
+          this.turns.push({ role: 'user', content: text });
+          this.message = '';
+          this.busy = true;
+          this.scroll();
+          try {
+            const r = await fetch('/api/assistant/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, history }) });
+            const b = await r.json();
+            if (!r.ok) throw new Error(b.detail || r.statusText);
+            const changes = b.changes || [];
+            this.turns.push({
+              role: 'assistant', content: b.reply || '', changes, diff: b.diff || [], proposal_id: b.proposal_id || '',
+              selected: changes.map((c, i) => c.error ? -1 : i).filter(i => i >= 0), status: '',
+            });
+          } catch (e) {
+            this.turns.push({ role: 'assistant', content: 'Sorry — ' + e.message, changes: [], selected: [], status: '' });
+          } finally {
+            this.busy = false;
+            this.scroll();
+          }
+        },
+        async apply(t) {
+          this.busy = true;
+          try {
+            const r = await fetch('/api/assistant/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ proposal_id: t.proposal_id, selected: t.selected }) });
+            const b = await r.json();
+            if (!r.ok) throw new Error(b.detail || r.statusText);
+            const parts = [];
+            if (b.created.length) parts.push('created ' + b.created.join(', '));
+            if (b.updated.length) parts.push('updated ' + b.updated.join(', '));
+            if (b.deleted.length) parts.push('deleted ' + b.deleted.join(', '));
+            t.status = 'Applied: ' + (parts.join('; ') || 'nothing needed changing') + '.' + (b.skipped.length ? ' Skipped: ' + b.skipped.join('; ') : '');
+            this.turns = [...this.turns];
+          } catch (e) {
+            t.status = 'Not applied: ' + e.message;
+            this.turns = [...this.turns];
+          } finally { this.busy = false; }
+        },
+        async removeRule(r) {
+          if (!confirm('Remove this old rule? It stops applying immediately.')) return;
+          const res = await fetch('/api/rules/' + encodeURIComponent(r.id), { method: 'DELETE' });
+          if (!res.ok) { this.flash('Could not remove the rule.', 'error'); return; }
+          await this.load();
+        },
+        async saveDevices() {
+          const devices = {};
+          for (const line of this.devicesText.split('\n')) {
+            const [name, rest] = line.split('=');
+            if (!name || !rest) continue;
+            devices[name.trim()] = rest.split(',').map(s => s.trim()).filter(Boolean);
+          }
+          try {
+            const r = await fetch('/api/assistant/devices', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ devices }) });
+            const b = await r.json();
+            if (!r.ok) throw new Error(b.detail || r.statusText);
+            this.flash('Devices saved.');
+            await this.load();
+          } catch (e) { this.flash(e.message, 'error'); }
+        },
+        async evaluate() {
+          if (!this.test.ip.trim()) { this.flash('Enter the device IP address.', 'error'); return; }
+          this.test.busy = true;
+          try {
+            const r = await fetch('/api/tools/policy-simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_ip: this.test.ip.trim(), url: this.test.url.trim() }) });
+            const b = await r.json();
+            if (!r.ok) throw new Error(b.detail || r.statusText);
+            this.test.result = b;
+          } catch (e) { this.flash(e.message, 'error'); }
+          finally { this.test.busy = false; }
+        },
+      };
+    }
+  </script>
+</body>
+</html>

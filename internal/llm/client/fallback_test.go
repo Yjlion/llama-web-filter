@@ -74,3 +74,29 @@ func TestClassifyHostDecodesWithoutGrammar(t *testing.T) {
 		t.Fatalf("verdict = %+v, err = %v, schemas = %v", v, err, schemas)
 	}
 }
+
+func TestClassifySite(t *testing.T) {
+	var schemas []bool
+	ts := sequenceServer(t, []string{`{"category":"Social Media","confidence":0.8}`}, &schemas)
+	defer ts.Close()
+	v, _, err := New(ts.URL).ClassifySite(context.Background(), "www.facebook.com", "", "")
+	if err != nil || v.Category != "social_media" || v.Confidence != 0.8 {
+		t.Fatalf("v=%+v err=%v", v, err)
+	}
+	if len(schemas) != 1 || schemas[0] {
+		t.Fatalf("schemas = %v, want one ungrammared request", schemas)
+	}
+}
+
+func TestClassifySiteRetriesOffListCategory(t *testing.T) {
+	var schemas []bool
+	ts := sequenceServer(t, []string{`{"category":"recipes","confidence":0.7}`, `{"category":"other","confidence":0.6}`}, &schemas)
+	defer ts.Close()
+	v, _, err := New(ts.URL).ClassifySite(context.Background(), "cook.example", "Recipes", "")
+	if err != nil || v.Category != "other" {
+		t.Fatalf("v=%+v err=%v", v, err)
+	}
+	if len(schemas) != 2 || !schemas[1] {
+		t.Fatalf("schemas = %v, want grammar retry", schemas)
+	}
+}

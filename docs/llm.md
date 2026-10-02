@@ -3,7 +3,8 @@
 Every content decision in llama-web-filter is made by a local multimodal
 language model served by [llama.cpp](https://github.com/ggml-org/llama.cpp):
 whether a page is adult, whether an image is explicit, whether an unknown
-host serves ads, and what a sentence typed on the Rules page means. Nothing
+host serves ads, what kind of site a host is (shopping, news, social media,
+banking, …), and what you ask for on the Assistant page. Nothing
 is sent to any external service.
 
 ## Runtime
@@ -68,6 +69,13 @@ request ──► decision cache (SQLite + in-memory LRU)  ──hit──► ac
   headings, first 3 KB of visible text).
 * **Sites** are learned: after three adult verdicts on one registrable
   domain the whole site is treated as adult without further model calls.
+* **Site categories** are keyed by registrable domain (`www.amazon.co.uk`
+  and `smile.amazon.co.uk` share `amazon.co.uk`). Installed domain lists
+  answer first; the model is asked only for sites they do not know, from
+  the hostname alone on the first navigation and again with the page title
+  when that first answer was unsure. Only navigations wait for it
+  (`llm.budget.category_ms`, 1500 ms); sub-resources and tunnelled hosts are
+  judged from what is already known.
 * **Prefetch**: when a page passes, the images it references are scored in
   the background so the browser's image requests hit a warm cache.
 * **Budgets** (`llm.budget`, milliseconds; per-policy `budget_ms` overrides)
@@ -75,6 +83,9 @@ request ──► decision cache (SQLite + in-memory LRU)  ──hit──► ac
   by default. On timeout the policy's `on_timeout` applies (`blur` for
   images, `allow` for pages by default); the model keeps working and the
   verdict lands in the cache for the next load.
+* **The assistant** waits up to `llm.budget.compile_ms` (180 s) for its
+  answer, which is a few hundred tokens: about 15 s on a GPU and a minute
+  or more on a small CPU.
 * **Unavailable** (model down, text-only model asked about an image, queue
   full): the policy's `on_unavailable` applies, `allow` by default.
 

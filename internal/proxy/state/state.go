@@ -60,6 +60,7 @@ type Runtime struct {
 	adblockInfo atomic.Pointer[AdBlockInfo]
 	mitmBypass  atomic.Pointer[[]string] // aggregated exclude-mode mitm domains, lowercased
 	generation  atomic.Uint64            // bumped on every policy reload
+	categorizer atomic.Pointer[categorizerBox]
 }
 
 // New loads settings.json once and wires up the CA, log store, category

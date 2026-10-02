@@ -1,71 +1,107 @@
-# Policies and rules
-
-Two layers decide what happens to a request.
+# Policies, the assistant and site categories
 
 **Policies** (`policies/*.json`) are per-client configurations matched by
 MAC, exact IP, CIDR or catch-all, inherited from gowebfilter: URL allow and
-block lists, categories, SafeSearch, YouTube channel filtering, DNS-over-HTTPS
-blocking, MITM control, the text and image classifiers and ad blocking. Edit
-them on the **Policies** page.
+block lists, site categories, SafeSearch, YouTube channel filtering,
+DNS-over-HTTPS blocking, MITM control, the text, image and video classifiers
+and ad blocking. A policy with a schedule applies only inside its time
+windows and, while active, takes priority over an unscheduled policy for
+the same devices. Edit policies on the **Policies** page, or ask the
+assistant.
 
-**Rules** (`config/rules.json`) are sentences. Each one is matched by
-client, time and site and overlaid on the client's policy for that request.
-They are the quick way to say what you want, and the way to express
-time-of-day and per-device exceptions.
+## The assistant
 
-## Writing rules
+On the **Assistant** page, tell the local model what you want, or ask it
+for advice. It answers in plain language and proposes changes to the
+policies; you tick the ones you want and press *Apply selected*. Nothing
+changes until you do, and every change is checked against the current
+policies first. Examples:
 
-On the **Rules** page, type a sentence and press *Understand*. The local
-model turns it into a structured rule under a fixed schema, the page shows a
-plain-English summary rendered from that structure, and you confirm before it
-is saved. Examples:
-
-| Sentence | Result |
+| Request | Proposed changes |
 |---|---|
-| Blur all adult images for ip address 10.10.10.10 from 10am to 5pm | adult images → blur, for 10.10.10.10, 10:00–17:00 |
-| Block ads on lan, except site www.cnn.com | ads → block, for every LAN device, not on www.cnn.com |
-| Block adult content for the kids tablet after 9pm | adult pages → block, for the device named kids-tablet, 21:00–23:59 |
-| Block facebook.com and tiktok.com for 192.168.1.0/24 on weekdays | sites → block, Mon–Fri |
-| Enforce safesearch for everyone | SafeSearch → on, for every LAN device |
-| Block the internet for aa:bb:cc:dd:ee:ff between 22:00 and 06:00 | all web access → block, overnight |
+| Block shopping and social media for the kids tablet on school nights | new policy for kids-tablet, Sun–Thu 19:00–23:59, blocking shopping and social media sites |
+| What would you recommend for a 10 year old? | advice, plus changes such as blocking adult, gambling and dating sites and turning on SafeSearch |
+| Blur adult images for everyone and block gambling sites | default policy: blur adult images; block gambling sites |
+| Block the internet for 10.0.0.7 between 22:00 and 06:00 | new overnight policy for 10.0.0.7 that blocks all web access |
+| Always allow khanacademy.org for the kids policy | kids: khanacademy.org on the allow list |
 
-If the model is not running, a simple keyword parser handles sentences of
-these shapes and says so in a warning. Device names come from the **Device
-names** box on the same page (`kids-tablet = 10.0.0.7, aa:bb:cc:dd:ee:ff`).
+Each proposed change shows what it does, and *What changes in each policy*
+shows every setting before and after. A change the filter cannot make (an
+unknown device, a category that does not exist) is shown greyed out with
+the reason; a website or device the model added that you never mentioned is
+flagged so you can untick it. The assistant needs the model to be running.
 
-`webfilter rules add "Block ads on lan"` does the same from the command line
-(`--dry-run` only shows the rule; `--yes` saves without asking).
+Device names come from the **Device names** box on the same page
+(`kids-tablet = 10.0.0.7, aa:bb:cc:dd:ee:ff`), so you can say "the kids
+tablet".
 
-## Rule structure
+From the command line: `webfilter assistant "Block gambling for everyone"`
+shows the reply and the changes and asks before applying (`--yes` applies
+without asking). It talks to `llm.external_url`, `llm.port`, or `--llm-url`.
+
+The changes the assistant can make are:
+
+| Change | Effect |
+|---|---|
+| `create_policy` | a new policy for some devices, optionally scheduled, copied from `default` |
+| `delete_policy`, `set_active`, `set_sources`, `set_schedule` | remove, switch off/on, retarget or reschedule a policy |
+| `block_categories`, `allow_categories`, `allow_only_categories`, `set_category_filter` | site categories (below) |
+| `block_sites`, `allow_sites`, `unlist_sites` | the URL block and allow lists |
+| `set_adult_images` (blur, block, checkerboard), `set_adult_text`, `set_adult_video` | the classifiers |
+| `set_ads`, `set_safesearch`, `set_doh_filter`, `set_youtube` | ad blocking, SafeSearch, DoH filtering, YouTube channels |
+| `block_internet` | block all web access (always-allowed sites still work) |
+
+### Rules from earlier versions
+
+Earlier versions turned one sentence into an overlay rule in
+`config/rules.json`. Those rules are still enforced, so nothing loosens on
+upgrade, but new ones cannot be added. The Assistant page lists them under
+**Old rules (still active)**: *Convert* sends a rule's sentence to the
+assistant so you can apply it as a policy change, then *Remove* deletes the
+rule. `webfilter rules list` and `webfilter rules remove <id>` do the same
+from the command line.
+
+## Site categories
+
+Every website gets one category from a fixed list:
+
+adult, dating, gambling, social media, chat & messaging, email, news,
+shopping, banking & finance, video streaming, music & audio, games,
+entertainment, sports, search engines, education, kids, government,
+health, travel, jobs, religion, technology, business, ads & tracking,
+malware & phishing, piracy, drugs & alcohol, weapons, violence & hate,
+infrastructure (CDNs, APIs, login and asset servers), other.
 
 ```json
-{
-  "id": "r_7a1c0e2d9b44",
-  "enabled": true,
-  "text": "Blur all adult images for ip address 10.10.10.10 from 10am to 5pm",
-  "match": {
-    "sources": ["10.10.10.10"],
-    "time": { "start": "10:00", "end": "17:00", "days": [] },
-    "sites": { "include": [], "exclude": [] }
-  },
-  "target": "adult_images",
-  "action": "blur"
-}
+"category_filter": { "enabled": true, "mode": "blacklist", "categories": ["shopping", "social_media"],
+                     "on_timeout": "allow", "on_unavailable": "allow", "budget_ms": 0 }
 ```
 
-| Field | Values |
-|---|---|
-| `match.sources` | IPs, CIDRs, MACs, device names, `lan` (private ranges), `all`; empty = everyone |
-| `match.policy` | restrict to clients whose policy has this name |
-| `match.time` | `start`/`end` as HH:MM (may cross midnight), `days` as `mon`…`sun` (empty = daily) |
-| `match.sites` | `include` (only on these sites) and `exclude` (not on these); domains, `*.wildcards` or URLs with paths |
-| `target` | `adult_images`, `adult_text`, `adult_video`, `ads`, `site`, `category`, `safesearch`, `youtube`, `internet` |
-| `action` | `block`, `allow`, and for adult images also `blur` and `checkerboard` |
-| `value` | operands for `site` (hostnames), `category` (names), `youtube` (channels) |
+* `mode` `blacklist` blocks the listed categories; `whitelist` allows only
+  them. Infrastructure hosts are always allowed in `whitelist` mode, and so
+  are the resources an allowed page loads, or nothing would display.
+* Where a category comes from: a manual override on the **Decisions** page,
+  then the installed domain lists (`webfilter categories update`; porn,
+  gambling, shopping, social, streaming and the other IPFire lists map onto
+  the categories above), then the model's cached verdict, then the model.
+  Verdicts are cached per registrable domain.
+* Only a page navigation asks the model and waits for it, up to
+  `budget_ms` (or `llm.budget.category_ms`, 1500 ms). If it has not decided
+  by then the page gets `on_timeout` and the category is ready for the next
+  visit. `on_unavailable` applies when the model is not running.
+* Sub-resources (scripts, images, API calls) are judged only from what is
+  already known, so one page's dozens of third-party hosts never queue model
+  calls. A host already known to be in a blocked category is refused.
+* Hosts that are tunnelled without inspection (MITM `exclude` sites such as
+  banks) are checked from the lists and the cache when the connection
+  opens, and categorized in the background for next time. Only
+  `blacklist` mode is enforced there.
+* The URL allow list wins over categories; the block list is checked first.
+* The policy editor's **Site Categories** section has *Test a site*; the
+  **Decisions** page lists every cached category (filter *Site
+  categories*) and lets you set one by hand for a domain or an exact host.
 
-Rules are applied in creation order; a later rule overrides an earlier one
-for the same target. The **What applies right now?** box on the Rules page
-shows the result for a given client and URL at this moment.
+`url_filter.categories` still selects raw domain lists by name, as before.
 
 ## Classifier settings in a policy
 
@@ -96,7 +132,7 @@ shows the result for a given client and URL at this moment.
   installed on the proxy machine, frames decoded from the stream's opening
   seconds. A video judged adult has its sources removed from the page, its
   YouTube player response made unplayable, and later requests for the stream
-  refused. The rule target is `adult_video`.
+  refused.
 
 ## Ad blocking
 

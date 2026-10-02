@@ -6,7 +6,7 @@ client ──► listeners (HTTP proxy, SOCKS5, transparent, ICAP)
               ▼
    addon pipeline  (internal/app/engine.go, order is load-bearing)
    ManagementAccess → ProxyAuthGate → PolicyRouter → RuleEvaluator → MitmControl
-   → UrlFilter → AdBlocker → QuicBlocker → DohFilter → SafeSearch → YouTubeFilter
+   → UrlFilter → CategoryFilter → AdBlocker → QuicBlocker → DohFilter → SafeSearch → YouTubeFilter
    → TextClassifier → ImageClassifier → RequestLogger
               │
               ▼
@@ -20,13 +20,14 @@ client ──► listeners (HTTP proxy, SOCKS5, transparent, ICAP)
 
 | Package | Role |
 |---|---|
-| `cmd/webfilter` | CLI: `run`, `setup`, `proxy`, `mgmt`, `llm`, `rules`, `adblock`, `categories`, `service` |
+| `cmd/webfilter` | CLI: `run`, `setup`, `proxy`, `mgmt`, `llm`, `assistant`, `rules`, `adblock`, `categories`, `service` |
 | `internal/proxy` | listeners, MITM, upstream fetching, the `FlowContext` every addon sees |
 | `internal/proxy/addons` | one file per pipeline stage |
 | `internal/proxy/state` | live settings, policies, rules and filter lists with hot reload |
 | `internal/models` | settings and policy schema |
-| `internal/policy/rules` | rule model, matching and overlay onto a policy |
-| `internal/policy/nlp` | sentence → rule compiler (model + parser fallback) |
+| `internal/policy/assistant` | natural-language assistant: model reply → typed policy changes, checked, diffed, applied |
+| `internal/policy/rules` | sentence rules saved by earlier versions (still enforced) and named devices |
+| `internal/sitecat` | the website category taxonomy and the domain-list mapping onto it |
 | `internal/classify/verdict` | the decision layer in front of the model |
 | `internal/classify/{imageprep,phash,textextract}` | image downscaling, perceptual hashing, HTML text extraction |
 | `internal/llm/runtime` | llama.cpp release download and process supervision |
@@ -39,8 +40,9 @@ client ──► listeners (HTTP proxy, SOCKS5, transparent, ICAP)
 
 1. `PolicyRouter` matches the client to a policy; `RuleEvaluator` overlays
    the rules that apply now and replaces `fc.Policy` with the effective one.
-2. `UrlFilter` and `AdBlocker` decide on the URL alone (lists, cache, and
-   for unknown ad-like hosts the model with a 500 ms budget).
+2. `UrlFilter`, `CategoryFilter` and `AdBlocker` decide on the URL alone
+   (lists, cache, and the model within a budget: the site's category for a
+   navigation, 1.5 s; unknown ad-like hosts, 500 ms).
 3. The response is fetched identity-encoded and buffered.
 4. `AdBlocker` injects cosmetic CSS; `TextClassifier` extracts the page's
    text, asks the verdict service (cache → model within the budget) and

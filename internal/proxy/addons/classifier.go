@@ -81,6 +81,8 @@ func budgetFor(fc *proxy.FlowContext, policyMs int, kind string) time.Duration {
 			ms = b.TextMs
 		case "host":
 			ms = b.HostMs
+		case "category":
+			ms = b.CategoryMs
 		}
 	}
 	if ms <= 0 {
@@ -90,6 +92,8 @@ func budgetFor(fc *proxy.FlowContext, policyMs int, kind string) time.Duration {
 			ms = d.ImageMs
 		case "text":
 			ms = d.TextMs
+		case "category":
+			ms = d.CategoryMs
 		default:
 			ms = d.HostMs
 		}

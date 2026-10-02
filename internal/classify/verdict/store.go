@@ -27,6 +27,9 @@ const (
 	KindText  Kind = "text"
 	KindHost  Kind = "host"
 	KindSite  Kind = "site" // eTLD+1 level verdict learned from pages/images
+	// KindCategory is a website's taxonomy category (internal/sitecat),
+	// keyed by eTLD+1, or by exact host for a manual override.
+	KindCategory Kind = "category"
 )
 
 // Source says where a verdict came from, in increasing order of authority.
@@ -37,6 +40,9 @@ const (
 	SourceLLM       Source = "llm"
 	SourceLearned   Source = "learned" // site-level aggregation
 	SourceManual    Source = "manual"  // operator override; wins over all
+	// SourceList marks a category answered by an installed domain list. It
+	// is never stored: the lists are consulted on every lookup.
+	SourceList Source = "list"
 )
 
 // Decision is one cached verdict.
@@ -52,6 +58,8 @@ type Decision struct {
 	Created    time.Time `json:"created"`
 	Hits       int64     `json:"hits"`
 	Confidence float64   `json:"confidence"`
+	// Category is the taxonomy slug for KindCategory rows.
+	Category string `json:"category,omitempty"`
 }
 
 const schemaSQL = `
@@ -67,6 +75,7 @@ CREATE TABLE IF NOT EXISTS decisions (
   confidence REAL NOT NULL DEFAULT 0,
   created    INTEGER NOT NULL,
   hits       INTEGER NOT NULL DEFAULT 0,
+  category   TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (kind, key)
 );
 CREATE INDEX IF NOT EXISTS idx_decisions_created ON decisions(created);
@@ -110,10 +119,40 @@ func Open(path string, lruSize int) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("decision schema: %w", err)
 	}
+	if err := migrate(db); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("decision schema migration: %w", err)
+	}
 	if lruSize <= 0 {
 		lruSize = 50000
 	}
 	return &Store{db: db, lru: newLRU(lruSize), hits: map[string]int64{}}, nil
+}
+
+// migrate brings a database created by an older version up to schemaSQL.
+func migrate(db *sql.DB) error {
+	rows, err := db.Query(`PRAGMA table_info(decisions)`)
+	if err != nil {
+		return err
+	}
+	has := map[string]bool{}
+	for rows.Next() {
+		var cid, notnull, pk int
+		var name, typ string
+		var dflt sql.NullString
+		if err := rows.Scan(&cid, &name, &typ, &notnull, &dflt, &pk); err != nil {
+			rows.Close()
+			return err
+		}
+		has[name] = true
+	}
+	rows.Close()
+	if !has["category"] {
+		if _, err := db.Exec(`ALTER TABLE decisions ADD COLUMN category TEXT NOT NULL DEFAULT ''`); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // OpenMemory opens an in-memory store (tests, or when no data dir).
@@ -134,12 +173,12 @@ func (s *Store) Get(kind Kind, key string) (Decision, bool) {
 		s.countHit(ck)
 		return d, true
 	}
-	row := s.db.QueryRow(`SELECT score, adult, source, model, detail, hint, confidence, created, hits FROM decisions WHERE kind=? AND key=?`, kind, key)
+	row := s.db.QueryRow(`SELECT score, adult, source, model, detail, hint, confidence, created, hits, category FROM decisions WHERE kind=? AND key=?`, kind, key)
 	var d Decision
 	var adult int
 	var created int64
 	var model, detail, hint sql.NullString
-	if err := row.Scan(&d.Score, &adult, &d.Source, &model, &detail, &hint, &d.Confidence, &created, &d.Hits); err != nil {
+	if err := row.Scan(&d.Score, &adult, &d.Source, &model, &detail, &hint, &d.Confidence, &created, &d.Hits, &d.Category); err != nil {
 		return Decision{}, false
 	}
 	d.Kind, d.Key, d.Adult = kind, key, adult != 0
@@ -163,11 +202,12 @@ func (s *Store) Put(d Decision) error {
 	if d.Adult {
 		adult = 1
 	}
-	_, err := s.db.Exec(`INSERT INTO decisions(kind,key,score,adult,source,model,detail,hint,confidence,created,hits)
-		VALUES(?,?,?,?,?,?,?,?,?,?,0)
+	_, err := s.db.Exec(`INSERT INTO decisions(kind,key,score,adult,source,model,detail,hint,confidence,created,hits,category)
+		VALUES(?,?,?,?,?,?,?,?,?,?,0,?)
 		ON CONFLICT(kind,key) DO UPDATE SET score=excluded.score, adult=excluded.adult, source=excluded.source,
-		  model=excluded.model, detail=excluded.detail, hint=excluded.hint, confidence=excluded.confidence, created=excluded.created`,
-		d.Kind, d.Key, d.Score, adult, d.Source, d.Model, d.Detail, d.Hint, d.Confidence, d.Created.Unix())
+		  model=excluded.model, detail=excluded.detail, hint=excluded.hint, confidence=excluded.confidence, created=excluded.created,
+		  category=excluded.category`,
+		d.Kind, d.Key, d.Score, adult, d.Source, d.Model, d.Detail, d.Hint, d.Confidence, d.Created.Unix(), d.Category)
 	if err != nil {
 		return err
 	}
@@ -207,16 +247,16 @@ func (s *Store) List(kind Kind, query string, limit int) ([]Decision, error) {
 	if limit <= 0 || limit > 1000 {
 		limit = 200
 	}
-	q := `SELECT kind, key, score, adult, source, model, detail, hint, confidence, created, hits FROM decisions WHERE 1=1`
+	q := `SELECT kind, key, score, adult, source, model, detail, hint, confidence, created, hits, category FROM decisions WHERE 1=1`
 	var args []any
 	if kind != "" {
 		q += ` AND kind=?`
 		args = append(args, kind)
 	}
 	if query = strings.TrimSpace(query); query != "" {
-		q += ` AND (key LIKE ? OR hint LIKE ? OR detail LIKE ?)`
+		q += ` AND (key LIKE ? OR hint LIKE ? OR detail LIKE ? OR category LIKE ?)`
 		like := "%" + query + "%"
-		args = append(args, like, like, like)
+		args = append(args, like, like, like, like)
 	}
 	q += ` ORDER BY created DESC LIMIT ?`
 	args = append(args, limit)
@@ -231,7 +271,7 @@ func (s *Store) List(kind Kind, query string, limit int) ([]Decision, error) {
 		var adult int
 		var created int64
 		var model, detail, hint sql.NullString
-		if err := rows.Scan(&d.Kind, &d.Key, &d.Score, &adult, &d.Source, &model, &detail, &hint, &d.Confidence, &created, &d.Hits); err != nil {
+		if err := rows.Scan(&d.Kind, &d.Key, &d.Score, &adult, &d.Source, &model, &detail, &hint, &d.Confidence, &created, &d.Hits, &d.Category); err != nil {
 			return nil, err
 		}
 		d.Adult = adult != 0

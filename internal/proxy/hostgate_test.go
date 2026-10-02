@@ -2,6 +2,7 @@ package proxy_test
 
 import (
 	"bufio"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -364,5 +365,42 @@ func TestConnectSplicesDoTWithoutDnsFiltering(t *testing.T) {
 	status, body := connectResponse(t, proxyAddr, "127.0.0.1:853")
 	if status != http.StatusServiceUnavailable {
 		t.Fatalf("CONNECT :853 status = %d, want 503 (body %q)", status, body)
+	}
+}
+
+type gateCategorizer struct{ asked []state.CategoryLookup }
+
+func (g *gateCategorizer) Categorize(_ context.Context, q state.CategoryLookup) state.CategoryAnswer {
+	g.asked = append(g.asked, q)
+	if q.Host == "bet.example" {
+		return state.CategoryAnswer{Category: "gambling", Known: true}
+	}
+	return state.CategoryAnswer{TimedOut: true}
+}
+
+func TestHostFilterVerdictCategoryFilter(t *testing.T) {
+	rt := gateRuntime(t)
+	cat := &gateCategorizer{}
+	rt.SetSiteCategorizer(cat)
+	p := gatePolicy(models.NewUrlFilterConfig(), nil) // url_filter disabled
+	p.CategoryFilter = models.NewCategoryFilterConfig()
+	p.CategoryFilter.Enabled = true
+	p.CategoryFilter.Categories = []string{"gambling"}
+
+	if v := proxy.HostFilterVerdict(rt, p, "bet.example"); !v.Blocked || v.Component != "category_filter" {
+		t.Fatalf("cached gambling tunnel = %+v", v)
+	}
+	if v := proxy.HostFilterVerdict(rt, p, "new.example"); v.Blocked {
+		t.Fatalf("unknown tunnel blocked: %+v", v)
+	}
+	for _, q := range cat.asked {
+		if !q.Enqueue || q.Budget != 0 {
+			t.Fatalf("tunnel lookup must queue without waiting: %+v", q)
+		}
+	}
+	// Allow-only mode is never enforced on tunnels.
+	p.CategoryFilter.Mode = models.UrlFilterModeWhitelist
+	if v := proxy.HostFilterVerdict(rt, p, "bet.example"); v.Blocked {
+		t.Fatalf("whitelist tunnel blocked: %+v", v)
 	}
 }

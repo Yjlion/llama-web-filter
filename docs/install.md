@@ -74,9 +74,9 @@ Sites listed under a policy's **MITM Control → exclude** (banking, by default
 
 ## 5. Turn on filtering
 
-Nothing is filtered until a policy or a rule says so. The quickest way is the
-**Rules** page: type a sentence such as *Block adult content and ads on lan*,
-confirm what the model understood, save. See [policies.md](policies.md).
+Nothing is filtered until a policy says so. The quickest way is the
+**Assistant** page: type a request such as *Block adult content and ads for everyone*,
+check the proposed changes and apply them. See [policies.md](policies.md).
 
 ## Running as a service
 
@@ -115,7 +115,7 @@ build, `webfilter llm download` fetches it; the model is reused.
 
 ```
 config/settings.json     global settings
-config/rules.json        natural-language rules and device names
+config/rules.json        named devices (and sentence rules from earlier versions)
 policies/*.json          per-client policies
 certs/                   the CA and issued certificates
 logs/webfilter.db        request and block log (SQLite)

@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // DecisionStore is the verdict cache as the Decisions page sees it. Set by
@@ -13,6 +15,8 @@ import (
 type DecisionStore interface {
 	List(kind, query string, limit int) (any, error)
 	Override(kind, key string, adult bool, note string) error
+	// OverrideCategory pins a site's (or exact host's) category.
+	OverrideCategory(key, category, note string) error
 	Delete(kind, key string) error
 	Clear(kind string, includeManual bool) error
 	Stats() any
@@ -66,12 +70,23 @@ func (s *Server) handleOverrideDecision(w http.ResponseWriter, r *http.Request) 
 		Key   string `json:"key"`
 		Adult bool   `json:"adult"`
 		Note  string `json:"note"`
+		// Category is required for kind "category" and ignored otherwise.
+		Category string `json:"category"`
 	}
 	if err := readJSON(r, &payload); err != nil || payload.Kind == "" || payload.Key == "" {
 		writeJSONError(w, http.StatusBadRequest, "kind and key are required")
 		return
 	}
-	if err := d.Override(payload.Kind, strings.TrimSpace(payload.Key), payload.Adult, payload.Note); err != nil {
+	key := strings.ToLower(strings.TrimSpace(payload.Key))
+	if payload.Kind == "category" {
+		if err := d.OverrideCategory(key, sitecat.Normalize(payload.Category), payload.Note); err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
+		return
+	}
+	if err := d.Override(payload.Kind, key, payload.Adult, payload.Note); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

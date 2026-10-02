@@ -15,12 +15,14 @@ import (
 	"time"
 
 	"github.com/yjlion/llama-web-filter/internal/certs"
+	"github.com/yjlion/llama-web-filter/internal/classify/verdict"
 	"github.com/yjlion/llama-web-filter/internal/config"
 	"github.com/yjlion/llama-web-filter/internal/mgmtapi"
 	"github.com/yjlion/llama-web-filter/internal/models"
 	"github.com/yjlion/llama-web-filter/internal/proxy"
 	"github.com/yjlion/llama-web-filter/internal/proxy/addons"
 	"github.com/yjlion/llama-web-filter/internal/proxy/state"
+	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
 // BuildProxyEngine wires a state.Runtime and the full addon pipeline into
@@ -40,6 +42,9 @@ type Classifiers struct {
 	Classifier addons.ContentClassifier
 	Prefetcher addons.ImagePrefetcher
 	Fetcher    addons.ImageFetcher
+	// Sites, when set, categorizes websites for category_filter (see
+	// NewSiteCategorizer); nil leaves category filtering on_unavailable.
+	Sites *verdict.Service
 }
 
 func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *state.Runtime, error) {
@@ -51,6 +56,14 @@ func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *sta
 		return nil, nil, err
 	}
 
+	if cls.Sites != nil {
+		var lists sitecat.ListMatcher
+		if rt.Categories != nil {
+			lists = rt.Categories
+		}
+		rt.SetSiteCategorizer(NewSiteCategorizer(cls.Sites, lists))
+	}
+
 	authGate := addons.NewProxyAuthGate(rt)
 	pipeline := proxy.NewPipeline([]proxy.Addon{
 		addons.ManagementAccess{},
@@ -59,6 +72,7 @@ func BuildProxyEngine(settingsPath string, cls Classifiers) (*proxy.Engine, *sta
 		addons.RuleEvaluator{},
 		addons.MitmControl{},
 		addons.UrlFilter{},
+		addons.CategoryFilter{},
 		addons.AdBlocker{Classifier: cls.Classifier},
 		addons.QuicBlocker{},
 		addons.DohFilter{},

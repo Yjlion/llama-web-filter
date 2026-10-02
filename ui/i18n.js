@@ -31,6 +31,7 @@
     en: {
       "nav.dashboard": "Dashboard",
       "nav.policies": "Policies",
+      "nav.assistant": "Assistant",
       "nav.logs": "Logs",
       "nav.analytics": "Analytics",
       "nav.tools": "Tools",
@@ -49,6 +50,7 @@
 
       "doc.dashboard": "WebFilter Proxy",
       "doc.policies": "Policies — WebFilter Proxy",
+      "doc.assistant": "Assistant — WebFilter Proxy",
       "doc.logs": "Logs — WebFilter Proxy",
       "doc.settings": "Settings — WebFilter Proxy",
       "doc.editor": "Policy Editor — WebFilter Proxy",
@@ -404,6 +406,7 @@
   I18N.he = {
     "nav.dashboard": "לוח בקרה",
     "nav.policies": "מדיניויות",
+    "nav.assistant": "עוזר",
     "nav.logs": "יומנים",
     "nav.analytics": "אנליטיקה",
     "nav.settings": "הגדרות",
@@ -417,6 +420,7 @@
     "theme.accent": "צבע הדגשה",
     "doc.dashboard": "WebFilter Proxy",
     "doc.policies": "מדיניויות — WebFilter Proxy",
+    "doc.assistant": "עוזר — WebFilter Proxy",
     "doc.logs": "יומנים — WebFilter Proxy",
     "doc.settings": "הגדרות — WebFilter Proxy",
     "doc.editor": "עורך מדיניות — WebFilter Proxy",
@@ -658,6 +662,7 @@
   I18N.yi = {
     "nav.dashboard": "טאַבלאָ",
     "nav.policies": "פּאָליסיס",
+    "nav.assistant": "אַסיסטענט",
     "nav.logs": "לאָגן",
     "nav.analytics": "אַנאַליטיק",
     "nav.settings": "אײַנשטעלונגען",
@@ -671,6 +676,7 @@
     "theme.accent": "אַקצענט־פֿאַרב",
     "doc.dashboard": "WebFilter Proxy",
     "doc.policies": "פּאָליסיס — WebFilter Proxy",
+    "doc.assistant": "אַסיסטענט — WebFilter Proxy",
     "doc.logs": "לאָגן — WebFilter Proxy",
     "doc.settings": "אײַנשטעלונגען — WebFilter Proxy",
     "doc.editor": "פּאָליסי־רעדאַקטאָר — WebFilter Proxy",
@@ -912,6 +918,7 @@
   I18N.es = {
     "nav.dashboard": "Panel",
     "nav.policies": "Políticas",
+    "nav.assistant": "Asistente",
     "nav.logs": "Registros",
     "nav.analytics": "Analíticas",
     "nav.settings": "Ajustes",
@@ -925,6 +932,7 @@
     "theme.accent": "Color de acento",
     "doc.dashboard": "WebFilter Proxy",
     "doc.policies": "Políticas — WebFilter Proxy",
+    "doc.assistant": "Asistente — WebFilter Proxy",
     "doc.logs": "Registros — WebFilter Proxy",
     "doc.settings": "Ajustes — WebFilter Proxy",
     "doc.editor": "Editor de políticas — WebFilter Proxy",
@@ -1166,6 +1174,7 @@
   I18N.fr = {
     "nav.dashboard": "Tableau de bord",
     "nav.policies": "Politiques",
+    "nav.assistant": "Assistant",
     "nav.logs": "Journaux",
     "nav.analytics": "Analytiques",
     "nav.settings": "Paramètres",
@@ -1179,6 +1188,7 @@
     "theme.accent": "Couleur d'accent",
     "doc.dashboard": "WebFilter Proxy",
     "doc.policies": "Politiques — WebFilter Proxy",
+    "doc.assistant": "Assistant — WebFilter Proxy",
     "doc.logs": "Journaux — WebFilter Proxy",
     "doc.settings": "Paramètres — WebFilter Proxy",
     "doc.editor": "Éditeur de politiques — WebFilter Proxy",
@@ -1420,6 +1430,7 @@
   I18N.de = {
     "nav.dashboard": "Übersicht",
     "nav.policies": "Richtlinien",
+    "nav.assistant": "Assistent",
     "nav.logs": "Protokolle",
     "nav.analytics": "Analytik",
     "nav.settings": "Einstellungen",
@@ -1433,6 +1444,7 @@
     "theme.accent": "Akzentfarbe",
     "doc.dashboard": "WebFilter Proxy",
     "doc.policies": "Richtlinien — WebFilter Proxy",
+    "doc.assistant": "Assistent — WebFilter Proxy",
     "doc.logs": "Protokolle — WebFilter Proxy",
     "doc.settings": "Einstellungen — WebFilter Proxy",
     "doc.editor": "Richtlinien-Editor — WebFilter Proxy",
@@ -1674,6 +1686,7 @@
   I18N.zh = {
     "nav.dashboard": "仪表板",
     "nav.policies": "策略",
+    "nav.assistant": "助手",
     "nav.logs": "日志",
     "nav.analytics": "分析",
     "nav.settings": "设置",
@@ -1687,6 +1700,7 @@
     "theme.accent": "强调色",
     "doc.dashboard": "WebFilter Proxy",
     "doc.policies": "策略 — WebFilter Proxy",
+    "doc.assistant": "助手 — WebFilter Proxy",
     "doc.logs": "日志 — WebFilter Proxy",
     "doc.settings": "设置 — WebFilter Proxy",
     "doc.editor": "策略编辑器 — WebFilter Proxy",
