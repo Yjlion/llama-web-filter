@@ -44,7 +44,9 @@ type LLMConfig struct {
 	GPULayers int `json:"gpu_layers"`
 
 	// ParallelSlots is llama-server's -np: concurrent sequences. Image
-	// verdicts for one page fan out across these.
+	// verdicts for one page fan out across these. 0 picks for the machine:
+	// 4 on a GPU, 2 on a CPU, where slots only split the same cores and
+	// every verdict slows down.
 	ParallelSlots int `json:"parallel_slots"`
 
 	// ContextSize is the per-slot context (-c). Classification prompts are
@@ -55,6 +57,12 @@ type LLMConfig struct {
 	// vision encoder's cost scales with pixels, and 384px is plenty to tell
 	// what a picture is of.
 	MaxImagePx int `json:"max_image_px"`
+
+	// ImageMaxTokens caps the tokens the vision encoder makes of one image
+	// (llama-server --image-max-tokens) for models with variable image
+	// resolution. 0 picks for the machine: 70 on a CPU, the model's own
+	// default on a GPU.
+	ImageMaxTokens int `json:"image_max_tokens"`
 
 	// Port is the loopback port llama-server listens on; 0 picks a free one.
 	Port int `json:"port"`
@@ -90,15 +98,14 @@ const DefaultLLMModel = "gemma-4-e2b"
 // auto-detected acceleration.
 func NewLLMConfig() LLMConfig {
 	return LLMConfig{
-		Enabled:       true,
-		Model:         DefaultLLMModel,
-		Accel:         "auto",
-		GPULayers:     99,
-		ParallelSlots: 4,
-		ContextSize:   4096,
-		MaxImagePx:    384,
-		ExtraArgs:     []string{},
-		Budget:        LLMBudget{ImageMs: 1500, TextMs: 2000, HostMs: 500, CategoryMs: 1500, CompileMs: 180000},
+		Enabled:     true,
+		Model:       DefaultLLMModel,
+		Accel:       "auto",
+		GPULayers:   99,
+		ContextSize: 4096,
+		MaxImagePx:  384,
+		ExtraArgs:   []string{},
+		Budget:      LLMBudget{ImageMs: 1500, TextMs: 2000, HostMs: 500, CategoryMs: 1500, CompileMs: 180000},
 	}
 }
 
@@ -121,8 +128,11 @@ func (c *LLMConfig) UnmarshalJSON(data []byte) error {
 	}
 	c.DataDir = strings.TrimSpace(c.DataDir)
 	c.ExternalURL = strings.TrimRight(strings.TrimSpace(c.ExternalURL), "/")
-	if c.ParallelSlots <= 0 {
-		c.ParallelSlots = 4
+	if c.ParallelSlots < 0 {
+		c.ParallelSlots = 0
+	}
+	if c.ImageMaxTokens < 0 {
+		c.ImageMaxTokens = 0
 	}
 	if c.ContextSize < 1024 {
 		c.ContextSize = 4096

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -117,5 +118,18 @@ func TestServerArgsScaleContextBySlots(t *testing.T) {
 		if got != tc.wantC {
 			t.Errorf("Context=%d Slots=%d: -c %s, want %s (args %v)", tc.ctx, tc.slots, got, tc.wantC, args)
 		}
+	}
+}
+
+func TestServerArgsImageMaxTokens(t *testing.T) {
+	has := func(args []string) bool { return slices.Contains(args, "--image-max-tokens") }
+	if args := (Spec{ModelPath: "m.gguf", MMProj: "p.gguf", ImageMaxTokens: 70}).serverArgs(9000); !has(args) || args[slices.Index(args, "--image-max-tokens")+1] != "70" {
+		t.Errorf("want --image-max-tokens 70: %v", args)
+	}
+	if args := (Spec{ModelPath: "m.gguf", ImageMaxTokens: 70}).serverArgs(9000); has(args) {
+		t.Errorf("a text-only model takes no image flag: %v", args)
+	}
+	if args := (Spec{ModelPath: "m.gguf", MMProj: "p.gguf"}).serverArgs(9000); has(args) {
+		t.Errorf("0 leaves the model's default: %v", args)
 	}
 }

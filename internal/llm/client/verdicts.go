@@ -8,6 +8,24 @@ import (
 	"github.com/yjlion/llama-web-filter/internal/sitecat"
 )
 
+// Verdicts are asked as one-word questions first (see yesNo): the model
+// answers yes or no in a single token and the verdict's score is that
+// token's probability. Generating a JSON object instead costs 30-100 output
+// tokens, which on a small CPU is 0.2-0.5 s each. The JSON prompts below are
+// the fallback for servers that return no logprobs and give no plain answer.
+
+const imageQuestionPrompt = `You are a strict content-safety classifier for a family web filter. Look at the image.
+Answer yes when it shows nudity (exposed breasts, buttocks or genitals) or sexual activity, or is pornographic or sexually explicit. Swimwear, underwear and suggestive poses alone: answer no.
+Answer with one word: yes or no.`
+
+const textQuestionPrompt = `You are a strict content classifier for a family web filter. You are given the title, URL and visible text excerpt of a web page.
+Answer yes when the page is pornographic, sexually explicit, an escort/adult-dating site, or primarily sells sexual services or adult products. Sex education, medical information and news reporting are not adult: answer no.
+Answer with one word: yes or no.`
+
+const hostQuestionPrompt = `You are classifying a web hostname for an ad blocker, given its name and example URL paths.
+Answer yes when the host primarily serves advertisements, tracking/analytics beacons, or affiliate redirects. Be conservative: content delivery networks, APIs and first-party assets are not ads: answer no.
+Answer with one word: yes or no.`
+
 // The system prompts are fixed strings so llama-server's prompt cache
 // (--cache-reuse) reuses their KV state across requests; only the user turn
 // changes. Keep them short: every token here is paid on every miss. Each
@@ -33,9 +51,20 @@ category is one of: ads, tracking, affiliate, cdn, api, content, other.
 Reply with exactly one line of compact JSON and nothing else:
 {"is_ad_or_tracker":false,"category":"cdn","confidence":0.9}`
 
-// siteSystemPrompt lists the whole taxonomy so the model picks from it; it
-// is built once from internal/sitecat and never changes at runtime.
-var siteSystemPrompt = func() string {
+// siteSystemPrompt names the taxonomy's slugs, with a note only where a
+// slug alone is ambiguous. It is built once from internal/sitecat and never
+// changes at runtime. It is kept short because the per-slot prompt cache
+// cannot hold every kind of prompt at once on a small machine, and each
+// time this one is evicted its tokens are paid again (about 30 ms each on
+// a small CPU).
+var siteSystemPrompt = "You sort websites into categories for a family web filter, from the hostname and, when known, the page title and description. Judge what the site is mainly used for, using what you know about well-known sites.\n" +
+	"Categories: " + strings.Join(sitecat.Slugs(), ", ") + "\n" +
+	"Notes: chat_messaging is messengers and chat rooms; streaming_video is video sites such as YouTube and Netflix; business is company sites and office tools; ads_tracking is ad networks and analytics; infrastructure is CDNs, APIs, login and asset servers people do not visit directly; other fits nothing else.\n" +
+	"Reply with the category only, exactly as written, and nothing else."
+
+// siteJSONPrompt is the full taxonomy with descriptions, for the
+// grammar-constrained retry when the short prompt's answer is off-list.
+var siteJSONPrompt = func() string {
 	var b strings.Builder
 	b.WriteString("You sort websites into categories for a family web filter. You are given a hostname and, when known, the page title and description. Judge what the site is mainly used for, using what you know about well-known sites.\n")
 	b.WriteString("category is exactly one of:\n")
@@ -47,6 +76,45 @@ var siteSystemPrompt = func() string {
 	b.WriteString(`{"category":"news","confidence":0.9}`)
 	return b.String()
 }()
+
+// yesNo asks a one-word question and returns the probability of "yes",
+// normalised over yes and no. ok is false when the reply is neither, which
+// sends the caller to the JSON prompt. A server without logprobs is read
+// from its plain answer with a fixed confidence.
+func (c *Client) yesNo(ctx context.Context, system string, user any) (p float64, ok bool, res Response, err error) {
+	res, err = c.Chat(ctx, Request{
+		Messages:    []Message{{Role: "system", Content: system}, {Role: "user", Content: user}},
+		MaxTokens:   1,
+		TopLogprobs: 10,
+	})
+	if err != nil {
+		return 0, false, res, err
+	}
+	var yes, no float64
+	for tok, prob := range res.Top {
+		switch strings.ToLower(strings.TrimSpace(tok)) {
+		case "yes":
+			yes += prob
+		case "no":
+			no += prob
+		}
+	}
+	if yes+no >= 0.5 {
+		return yes / (yes + no), true, res, nil
+	}
+	if res.Top == nil {
+		switch strings.ToLower(strings.Trim(res.Content, " \t\n.!")) {
+		case "yes":
+			return 0.85, true, res, nil
+		case "no":
+			return 0.15, true, res, nil
+		}
+	}
+	return 0, false, res, nil
+}
+
+// odds formats a probability for a verdict's detail text.
+func odds(what string, p float64) string { return fmt.Sprintf("p(%s)=%.2f", what, p) }
 
 // classify asks for a verdict without a grammar first. llama-server's
 // JSON-schema grammar costs tens of milliseconds per output token with a
@@ -80,11 +148,18 @@ type ImageVerdict struct {
 	IsAd        bool    `json:"is_ad"`
 	Confidence  float64 `json:"confidence"`
 	Description string  `json:"description"`
+	// Prob is the model's probability of "adult" when the verdict was a
+	// one-word answer (FromProb); it is the score as is.
+	Prob     float64 `json:"-"`
+	FromProb bool    `json:"-"`
 }
 
 // Score folds the verdict into a single 0..1 adult probability, which is
 // the shape the policy thresholds and the Tools page expect.
 func (v ImageVerdict) Score() float64 {
+	if v.FromProb {
+		return v.Prob
+	}
 	base := []float64{0.02, 0.3, 0.75, 0.97}[clampInt(v.Nudity, 0, 3)]
 	if v.Adult && base < 0.9 {
 		base = 0.9
@@ -100,10 +175,16 @@ type TextVerdict struct {
 	Categories []string `json:"categories"`
 	Confidence float64  `json:"confidence"`
 	Reason     string   `json:"reason"`
+	// Prob and FromProb are as in ImageVerdict.
+	Prob     float64 `json:"-"`
+	FromProb bool    `json:"-"`
 }
 
 // Score folds the verdict into a 0..1 adult probability.
 func (v TextVerdict) Score() float64 {
+	if v.FromProb {
+		return v.Prob
+	}
 	c := clamp(v.Confidence, 0, 1)
 	if v.Adult {
 		return 0.6 + 0.39*c
@@ -180,6 +261,9 @@ func (c *Client) ClassifyImage(ctx context.Context, mime string, data []byte, hi
 		q += " Context: " + truncate(hint, 200)
 	}
 	user = append(user, TextPart(q))
+	if p, ok, res, err := c.yesNo(ctx, imageQuestionPrompt, user); err != nil || ok {
+		return ImageVerdict{Adult: p >= 0.5, Nudity: nudityOf(p), Confidence: max(p, 1-p), Description: odds("adult", p), Prob: p, FromProb: true}, res, err
+	}
 	var v ImageVerdict
 	res, err := c.classify(ctx, Request{
 		Messages:   []Message{{Role: "system", Content: imageSystemPrompt}, {Role: "user", Content: user}},
@@ -192,7 +276,10 @@ func (c *Client) ClassifyImage(ctx context.Context, mime string, data []byte, hi
 
 // ClassifyText asks the model about a page's visible text.
 func (c *Client) ClassifyText(ctx context.Context, url, title, text string) (TextVerdict, Response, error) {
-	prompt := fmt.Sprintf("URL: %s\nTitle: %s\n\nText:\n%s", truncate(url, 300), truncate(title, 200), truncate(text, 3000))
+	prompt := fmt.Sprintf("URL: %s\nTitle: %s\n\nText:\n%s", truncate(url, 300), truncate(title, 200), truncate(text, textExcerpt))
+	if p, ok, res, err := c.yesNo(ctx, textQuestionPrompt, prompt); err != nil || ok {
+		return TextVerdict{Adult: p >= 0.5, Confidence: max(p, 1-p), Reason: odds("adult", p), Prob: p, FromProb: true}, res, err
+	}
 	var v TextVerdict
 	res, err := c.classify(ctx, Request{
 		Messages:   []Message{{Role: "system", Content: textSystemPrompt}, {Role: "user", Content: prompt}},
@@ -215,6 +302,9 @@ func (c *Client) ClassifyHost(ctx context.Context, host string, samplePaths []st
 			prompt += "- " + truncate(p, 120) + "\n"
 		}
 	}
+	if p, ok, res, err := c.yesNo(ctx, hostQuestionPrompt, prompt); err != nil || ok {
+		return HostVerdict{IsAdOrTracker: p >= 0.5, Category: odds("ad", p), Confidence: max(p, 1-p)}, res, err
+	}
 	var v HostVerdict
 	res, err := c.classify(ctx, Request{
 		Messages:   []Message{{Role: "system", Content: hostSystemPrompt}, {Role: "user", Content: prompt}},
@@ -236,31 +326,57 @@ func (c *Client) ClassifySite(ctx context.Context, host, title, description stri
 	if description = strings.TrimSpace(description); description != "" {
 		prompt += "\nDescription: " + truncate(description, 300)
 	}
-	req := Request{
-		Messages:   []Message{{Role: "system", Content: siteSystemPrompt}, {Role: "user", Content: prompt}},
+	res, err := c.Chat(ctx, Request{
+		Messages:    []Message{{Role: "system", Content: siteSystemPrompt}, {Role: "user", Content: prompt}},
+		MaxTokens:   8,
+		Stop:        []string{"\n"},
+		TopLogprobs: 1,
+	})
+	if err != nil {
+		return SiteVerdict{}, res, err
+	}
+	if slug := sitecat.Normalize(strings.Trim(res.Content, " \t\n.\"`*")); slug != "" {
+		conf := res.FirstProb
+		if res.Top == nil {
+			conf = 0.7 // no logprobs: a plain answer, moderately sure
+		}
+		return SiteVerdict{Category: slug, Confidence: clamp(conf, 0, 1)}, res, nil
+	}
+	// An off-list category: ask again with the enum enforced by grammar.
+	var v SiteVerdict
+	retry, err := c.ChatJSON(ctx, Request{
+		Messages:   []Message{{Role: "system", Content: siteJSONPrompt}, {Role: "user", Content: prompt}},
 		Schema:     siteSchema,
 		SchemaName: "site_category",
 		MaxTokens:  32,
-	}
-	var v SiteVerdict
-	res, err := c.classify(ctx, req, &v)
-	if err != nil {
-		return v, res, err
-	}
-	if slug := sitecat.Normalize(v.Category); slug != "" {
-		v.Category = slug
-		v.Confidence = clamp(v.Confidence, 0, 1)
-		return v, res, nil
-	}
-	// An off-list category: ask again with the enum enforced by grammar.
-	v = SiteVerdict{}
-	retry, err := c.ChatJSON(ctx, req, &v)
+	}, &v)
 	retry.Elapsed += res.Elapsed
-	if err == nil && !sitecat.Valid(v.Category) {
-		v.Category = sitecat.Other
+	if err == nil {
+		// The grammar holds the reply to the enum; a server without
+		// grammar support may still answer in its own words.
+		if v.Category = sitecat.Normalize(v.Category); v.Category == "" {
+			v.Category = sitecat.Other
+		}
 	}
 	v.Confidence = clamp(v.Confidence, 0, 1)
 	return v, retry, err
+}
+
+// textExcerpt bounds the page text sent to the model. Prompt tokens cost
+// about 30 ms each on a small CPU, and a page's title and first paragraphs
+// say whether it is adult.
+const textExcerpt = 1000
+
+// nudityOf maps a one-word verdict's probability onto the nudity scale of
+// the JSON verdict, so callers that test Nudity agree with Adult.
+func nudityOf(p float64) int {
+	switch {
+	case p >= 0.5:
+		return 2
+	case p >= 0.25:
+		return 1
+	}
+	return 0
 }
 
 func clamp(v, lo, hi float64) float64 {

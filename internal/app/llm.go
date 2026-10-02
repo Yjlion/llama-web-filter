@@ -59,8 +59,8 @@ func NewLLMStack(ctx context.Context, cfg models.LLMConfig) *LLMStack {
 	}
 	backend := &llmBackend{svc: svc, maxPx: cfg.MaxImagePx}
 	vs := verdict.New(store, backend, verdict.Options{
-		Workers:    cfg.ParallelSlots,
-		QueueLimit: 64 * max(cfg.ParallelSlots, 1),
+		Workers:    svc.Slots(),
+		QueueLimit: 64 * svc.Slots(),
 		MaxImagePx: cfg.MaxImagePx,
 	})
 	pre := verdict.NewPrefetcher(vs, &http.Client{Transport: proxy.NewTransport(), Timeout: 20 * time.Second}, 2)
