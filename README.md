@@ -5,6 +5,11 @@ office, whose content decisions are made by a **local multimodal edge LLM**
 (Gemma 4 E2B by default, served by a bundled [llama.cpp](https://github.com/ggml-org/llama.cpp)).
 Nothing leaves your network.
 
+> ⚠️ **Disclaimer:** This project is "vibe coded" — largely built with AI
+> assistance (Claude Code). Review and test it before relying on it; it
+> intercepts TLS and filters live network traffic. Provided **as-is with no
+> warranty**. See [DISCLAIMER.md](DISCLAIMER.md).
+
 It is a fork of [gowebfilter](https://github.com/Yjlion/gowebfilter) that
 replaces the embedded statistical classifiers with the model, and adds:
 
