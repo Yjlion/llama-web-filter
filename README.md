@@ -1,5 +1,8 @@
 # llama-web-filter
 
+> [!CAUTION]
+> Please note: This is a little to resource intensive. The product works, and the LLM classifies correctly. While it works well a single user on a modern desktop, I do not believe it will hold up with a large usage. Maybe one day I will come back to it.
+
 A policy-based, TLS-intercepting web-filtering proxy for a household or small
 office, whose content decisions are made by a **local multimodal edge LLM**
 (Gemma 4 E2B by default, served by a bundled [llama.cpp](https://github.com/ggml-org/llama.cpp)).
